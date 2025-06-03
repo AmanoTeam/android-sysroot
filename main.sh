@@ -45,12 +45,15 @@ if ! [ -f "${pkg_file}" ]; then
 	
 	ar x "${pkg_file}"
 	
-	tar \
+	sudo tar \
+		--no-same-owner \
 		--no-overwrite-dir \
 		--no-same-permissions \
 		--directory="$(dirname "${pkg_file}")" \
 		--extract \
 		--file='./data.tar.xz'
+	
+	sudo chmod -R 777 /tmp
 fi
 
 
