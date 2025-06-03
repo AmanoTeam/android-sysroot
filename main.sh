@@ -46,6 +46,7 @@ if ! [ -f "${pkg_file}" ]; then
 	ar x "${pkg_file}"
 	
 	sudo tar \
+		--dereference \
 		--no-same-owner \
 		--no-overwrite-dir \
 		--no-same-permissions \
