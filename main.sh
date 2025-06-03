@@ -10,6 +10,8 @@ declare -ra targets=(
 	'i686-linux-android'
 )
 
+declare -r pkg_file='/tmp/pkg.deb'
+
 declare -r ndk_archive='/tmp/ndk.zip'
 declare -r ndk_directory='/tmp/android-ndk-r27c'
 
@@ -30,6 +32,26 @@ if ! [ -f "${ndk_archive}" ]; then
 		"${ndk_archive}"
 fi
 
+if ! [ -f "${pkg_file}" ]; then
+	curl \
+		--url 'https://github.com/termux-user-repository/dists/releases/download/0.1/ndk-sysroot-gcc-compact_27b-3_arm.deb' \
+		--retry '30' \
+		--retry-all-errors \
+		--retry-delay '0' \
+		--retry-max-time '0' \
+		--location \
+		--silent \
+		--output "${pkg_file}"
+	
+	ar x "${pkg_file}"
+	
+	tar \
+		--directory="$(dirname "${pkg_file}")" \
+		--extract \
+		--file='./data.tar.xz'
+fi
+
+
 for target in "${targets[@]}"; do
 	declare sysroot_directory="/tmp/${target}"
 	
@@ -39,7 +61,7 @@ for target in "${targets[@]}"; do
 	
 	cp \
 		--recursive \
-		"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" \
+		'/tmp/data/data/com.termux/files/usr/include' \
 		"${sysroot_directory}"
 	
 	cd "${sysroot_directory}/include"
