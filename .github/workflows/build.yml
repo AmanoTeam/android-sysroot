@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+    branches:
+        - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@main
+      with:
+        submodules: true
+    - name: Generate sysroots
+      run: bash './main.sh'
+    - name: Upload artifact
+      uses: actions/upload-artifact@main
+      with:
+        path: |
+          /tmp/*-linux-android*.tar.xz*
+    - name: Create release
+      uses: softprops/action-gh-release@master
+      with:
+        tag_name: 0.1
+        name: Android sysroots
+        files: /tmp/*-linux-android*.tar.xz*
+        draft: false
+        prerelease: false
+        fail_on_unmatched_files: true
+        body: "* Initial release"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
