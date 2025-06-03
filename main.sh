@@ -45,7 +45,7 @@ if ! [ -f "${pkg_file}" ]; then
 	
 	ar x "${pkg_file}"
 	
-	tar \
+	sudo tar \
 		--touch \
 		--no-overwrite-dir \
 		--no-same-permissions \
