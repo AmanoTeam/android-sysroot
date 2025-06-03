@@ -46,6 +46,7 @@ if ! [ -f "${pkg_file}" ]; then
 	ar x "${pkg_file}"
 	
 	tar \
+		--no-same-permissions \
 		--directory="$(dirname "${pkg_file}")" \
 		--extract \
 		--file='./data.tar.xz'
