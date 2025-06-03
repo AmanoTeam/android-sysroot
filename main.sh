@@ -46,6 +46,8 @@ if ! [ -f "${pkg_file}" ]; then
 	ar x "${pkg_file}"
 	
 	tar \
+		--touch \
+		--no-overwrite-dir \
 		--no-same-permissions \
 		--directory="$(dirname "${pkg_file}")" \
 		--extract \
