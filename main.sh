@@ -45,7 +45,7 @@ if ! [ -f "${pkg_file}" ]; then
 	
 	ar x "${pkg_file}"
 	
-	tar \
+	sudo tar \
 		--dereference \
 		--no-same-owner \
 		--no-overwrite-dir \
@@ -54,7 +54,9 @@ if ! [ -f "${pkg_file}" ]; then
 		--extract \
 		--file='./data.tar.xz'
 	
-	chmod -R 777 /tmp||true
+	sudo chown "${USER}:${USER}" -R '/tmp/data'
+	
+	# chmod -R 777 /tmp||true
 fi
 
 
