@@ -54,7 +54,7 @@ if ! [ -f "${pkg_file}" ]; then
 		--extract \
 		--file='./data.tar.xz'
 	
-	sudo chown "${USER}:${USER}" -R '/tmp/data'
+	sudo chown "${USER}:${USER}" -R '/tmp'
 	
 	# chmod -R 777 /tmp||true
 fi
