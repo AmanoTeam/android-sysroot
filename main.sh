@@ -3,11 +3,11 @@
 set -eu
 
 declare -ra targets=(
-	'aarch64-linux-android'
-	'riscv64-linux-android'
-	'arm-linux-androideabi'
-	'x86_64-linux-android'
-	'i686-linux-android'
+	'aarch64-unknown-linux-android'
+	'riscv64-unknown-linux-android'
+	'arm-unknown-linux-androideabi'
+	'x86_64-unknown-linux-android'
+	'i686-unknown-linux-android'
 )
 
 declare -r pkg_file='/tmp/pkg.deb'
@@ -59,6 +59,7 @@ fi
 
 
 for target in "${targets[@]}"; do
+	declare triplet="${target/-unknown/}"
 	declare sysroot_directory="/tmp/${target}"
 	
 	rm --recursive --force "${sysroot_directory}"
@@ -73,7 +74,7 @@ for target in "${targets[@]}"; do
 	cd "${sysroot_directory}/include"
 	
 	for name in *-linux-android*; do
-		if [ "${name}" != "${target}" ]; then
+		if [ "${name}" != "${triplet}" ]; then
 			rm --recursive "${name}"
 			continue
 		fi
@@ -82,8 +83,8 @@ for target in "${targets[@]}"; do
 	done
 	
 	cp \
-		"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${target}/35/"* \
-		"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${target}/"*.{a,so} \
+		"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/35/"* \
+		"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/"*.{a,so} \
 		"${sysroot_directory}/lib"
 	
 	declare tarball_filename="/tmp/${target}.tar.xz"
