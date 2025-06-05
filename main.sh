@@ -4,7 +4,7 @@ set -eu
 
 declare -ra targets=(
 	'aarch64-unknown-linux-android'
-	'riscv64-unknown-linux-android'
+	# 'riscv64-unknown-linux-android'
 	'arm-unknown-linux-androideabi'
 	'x86_64-unknown-linux-android'
 	'i686-unknown-linux-android'
