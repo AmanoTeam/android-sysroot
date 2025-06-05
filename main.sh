@@ -111,9 +111,9 @@ for target in "${targets[@]}"; do
 			"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/"*.{a,so} \
 			"${sysroot_directory}/lib"
 		
-		declare tarball_filename="/tmp/${target}.tar.xz"
+		declare tarball_filename="${sysroot_directory}.tar.xz"
 		
-		tar --directory='/tmp' --create --file=- "${target}" | xz --compress -9 > "${tarball_filename}"
+		tar --directory='/tmp' --create --file=- "$(basename "${sysroot_directory}")" | xz --compress -9 > "${tarball_filename}"
 		sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
 	done
 done
