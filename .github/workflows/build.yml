@@ -22,7 +22,7 @@ jobs:
     - name: Create release
       uses: softprops/action-gh-release@master
       with:
-        tag_name: 0.3
+        tag_name: 0.4
         name: Android sysroots
         files: /tmp/*-linux-android*.tar.xz*
         draft: false

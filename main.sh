@@ -10,6 +10,24 @@ declare -ra targets=(
 	'i686-unknown-linux-android'
 )
 
+declare -r versions=(
+	'21'
+	'22'
+	'23'
+	'24'
+	'25'
+	'26'
+	'27'
+	'28'
+	'29'
+	'30'
+	'31'
+	'32'
+	'33'
+	'34'
+	'35'
+)
+
 declare -r pkg_file='/tmp/pkg.deb'
 
 declare -r ndk_archive='/tmp/ndk.zip'
@@ -62,35 +80,40 @@ fi
 
 for target in "${targets[@]}"; do
 	declare triplet="${target/-unknown/}"
-	declare sysroot_directory="/tmp/${target}"
 	
-	rm --recursive --force "${sysroot_directory}"
-	
-	mkdir --parent "${sysroot_directory}/lib"
-	
-	cp \
-		--recursive \
-		'/tmp/data/data/com.termux/files/usr/include' \
-		"${sysroot_directory}"
-	
-	cd "${sysroot_directory}/include"
-	
-	for name in *-linux-android*; do
-		if [ "${name}" != "${triplet}" ]; then
-			rm --recursive "${name}"
-			continue
-		fi
+	for version in "${versions[@]}"; do
+		echo "${target}${version}"
 		
-		mv "${name}/"* './' && rmdir "${name}"
+		declare sysroot_directory="/tmp/${target}${version}"
+		
+		rm --recursive --force "${sysroot_directory}"
+		
+		mkdir --parent "${sysroot_directory}/lib"
+		
+		cp \
+			--recursive \
+			'/tmp/data/data/com.termux/files/usr/include' \
+			"${sysroot_directory}"
+		
+		cd "${sysroot_directory}/include"
+		
+		for name in *-linux-android*; do
+			if [ "${name}" != "${triplet}" ]; then
+				rm --recursive "${name}"
+				continue
+			fi
+			
+			mv "${name}/"* './' && rmdir "${name}"
+		done
+		
+		cp \
+			"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}/"* \
+			"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/"*.{a,so} \
+			"${sysroot_directory}/lib"
+		
+		declare tarball_filename="/tmp/${target}.tar.xz"
+		
+		tar --directory='/tmp' --create --file=- "${target}" | xz --compress -9 > "${tarball_filename}"
+		sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
 	done
-	
-	cp \
-		"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/35/"* \
-		"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/"*.{a,so} \
-		"${sysroot_directory}/lib"
-	
-	declare tarball_filename="/tmp/${target}.tar.xz"
-	
-	tar --directory='/tmp' --create --file=- "${target}" | xz --compress -9 > "${tarball_filename}"
-	sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
 done
