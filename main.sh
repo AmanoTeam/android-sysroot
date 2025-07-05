@@ -4,7 +4,7 @@ set -eu
 
 declare -ra targets=(
 	'aarch64-unknown-linux-android'
-	# 'riscv64-unknown-linux-android'
+	'riscv64-unknown-linux-android'
 	'arm-unknown-linux-androideabi'
 	'x86_64-unknown-linux-android'
 	'i686-unknown-linux-android'
@@ -74,15 +74,26 @@ if ! [ -f "${pkg_file}" ]; then
 	
 	sudo chown "${USER}:${USER}" -R '/tmp'
 	
-	sed --in-place '/#warning/d' '/tmp/data/data/com.termux/files/usr/include/sys/cdefs.h'
+	sed \
+		--in-place \
+		'/#warning/d' \
+		'/tmp/data/data/com.termux/files/usr/include/sys/cdefs.h'
+	
+	sed \
+		--in-place \
+		's/__ANDROID_API__ 24/__ANDROID_API__ __ANDROID_API_FUTURE__/g' \
+		'/tmp/data/data/com.termux/files/usr/include/sys/cdefs.h'
 fi
-
 
 for target in "${targets[@]}"; do
 	declare triplet="${target/-unknown/}"
 	
 	for version in "${versions[@]}"; do
 		echo "${target}${version}"
+		
+		if ! [ -d "${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}" ]; then
+			continue
+		fi
 		
 		declare sysroot_directory="/tmp/${target}${version}"
 		
