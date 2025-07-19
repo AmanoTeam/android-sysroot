@@ -8,9 +8,17 @@ declare -ra targets=(
 	'arm-unknown-linux-androideabi'
 	'x86_64-unknown-linux-android'
 	'i686-unknown-linux-android'
+	'mipsel-unknown-linux-android'
+	'mips64el-unknown-linux-android'
 )
 
 declare -r versions=(
+	'14'
+	'15'
+	'16'
+	'17'
+	'18'
+	'19'
 	'21'
 	'22'
 	'23'
@@ -32,10 +40,58 @@ declare -r pkg_file='/tmp/pkg.deb'
 
 declare -r ndk_archive='/tmp/ndk.zip'
 declare -r ndk_directory='/tmp/android-ndk-r27c'
+declare -r unsupported_ndk_directory='/tmp/android-ndk-r16b'
+
+function get_arch() {
+	
+	if [ "${1}" = 'aarch64-unknown-linux-android' ]; then
+		echo 'arm64'
+	fi
+	
+	if [ "${1}" = 'riscv64-unknown-linux-android' ]; then
+		echo 'riscv64'
+	fi
+	
+	if [ "${1}" = 'arm-unknown-linux-androideabi' ]; then
+		echo 'arm'
+	fi
+	
+	if [ "${1}" = 'x86_64-unknown-linux-android' ]; then
+		echo 'x86_64'
+	fi
+	
+	if [ "${1}" = 'i686-unknown-linux-android' ]; then
+		echo 'x86'
+	fi
+	
+	if [ "${1}" = 'mipsel-unknown-linux-android' ]; then
+		echo 'mips'
+	fi
+	
+	if [ "${1}" = 'mips64el-unknown-linux-android' ]; then
+		echo 'mips64'
+	fi
+
+}
 
 if ! [ -f "${ndk_archive}" ]; then
 	curl \
 		--url 'https://dl.google.com/android/repository/android-ndk-r27c-linux.zip' \
+		--retry '30' \
+		--retry-all-errors \
+		--retry-delay '0' \
+		--retry-max-time '0' \
+		--location \
+		--silent \
+		--output "${ndk_archive}"
+	
+	unzip \
+		-d "$(dirname "${ndk_directory}")" \
+		-q \
+		"${ndk_archive}"
+	
+	curl \
+		--url 'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip' \
 		--retry '30' \
 		--retry-all-errors \
 		--retry-delay '0' \
@@ -86,12 +142,18 @@ if ! [ -f "${pkg_file}" ]; then
 fi
 
 for target in "${targets[@]}"; do
+	declare arch="$(get_arch ${target})"
 	declare triplet="${target/-unknown/}"
+	declare unsupported_ndk='0'
 	
 	for version in "${versions[@]}"; do
 		echo "${target}${version}"
 		
-		if ! [ -d "${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}" ]; then
+		if [ -d "${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}" ]; then
+			unsupported_ndk='0'
+		elif [ -d "${unsupported_ndk_directory}/platforms/android-${version}/arch-${arch}" ]; then
+			unsupported_ndk='1'
+		else
 			continue
 		fi
 		
@@ -101,9 +163,15 @@ for target in "${targets[@]}"; do
 		
 		mkdir --parent "${sysroot_directory}/lib"
 		
+		if (( unsupported_ndk )); then
+			declare include_directory="${unsupported_ndk_directory}/sysroot/usr/include"
+		else
+			declare include_directory='/tmp/data/data/com.termux/files/usr/include'
+		fi
+		
 		cp \
 			--recursive \
-			'/tmp/data/data/com.termux/files/usr/include' \
+			"${include_directory}" \
 			"${sysroot_directory}"
 		
 		cd "${sysroot_directory}/include"
@@ -117,10 +185,25 @@ for target in "${targets[@]}"; do
 			mv "${name}/"* './' && rmdir "${name}"
 		done
 		
-		cp \
-			"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}/"* \
-			"${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/"*.{a,so} \
-			"${sysroot_directory}/lib"
+		if (( unsupported_ndk )); then
+			declare library_directory="${unsupported_ndk_directory}/platforms/android-${version}/arch-${arch}/usr/lib"
+			declare library_directory2="${unsupported_ndk_directory}/platforms/android-${version}/arch-${arch}/usr/lib64"
+		else
+			declare library_directory="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}"
+			declare library_directory2="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}"
+		fi
+		
+		if (( unsupported_ndk )); then
+			cp \
+				"${library_directory}/"* \
+				"${library_directory2}/"* \
+				"${sysroot_directory}/lib" || true
+		else
+			cp \
+				"${library_directory}/"* \
+				"${library_directory2}/"*.{a,so} \
+				"${sysroot_directory}/lib" || true
+		fi
 		
 		declare tarball_filename="${sysroot_directory}.tar.xz"
 		
