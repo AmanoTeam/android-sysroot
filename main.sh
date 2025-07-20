@@ -2,6 +2,9 @@
 
 set -eu
 
+declare -r binutils_tarball='/tmp/binutils.tar.xz'
+declare -r binutils_directory='/tmp/binutils-with-gold-2.44'
+
 declare -ra targets=(
 	'aarch64-unknown-linux-android'
 	'riscv64-unknown-linux-android'
@@ -19,6 +22,7 @@ declare -r versions=(
 	'17'
 	'18'
 	'19'
+	'20'
 	'21'
 	'22'
 	'23'
@@ -78,10 +82,14 @@ function get_arch() {
 
 function remove_symbols() {
 
-	objcopy \
-		--redefine-sym '__stack_chk_fail=liaf_khc_kcats__' \
-		--redefine-sym '__stack_chk_fail_local=lacol_liaf_khc_kcats__' \
-		"${1}"
+	# "/tmp/bin/${1}-objcopy" \
+	# --redefine-sym '__stack_chk_fail=liaf_khc_kcats__' \
+	# --redefine-sym '__stack_chk_fail_local=lacol_liaf_khc_kcats__' \
+	# "${2}"
+	
+	"/tmp/bin/${1}-objcopy" \
+		--strip-symbol '__stack_chk_fail_local' \
+		"${2}"
 	
 }
 
@@ -115,6 +123,16 @@ if ! [ -f "${ndk_archive}" ]; then
 		-d "$(dirname "${ndk_directory}")" \
 		-q \
 		"${ndk_archive}"
+	
+	ln \
+		--symbolic \
+		"${unsupported_ndk_directory}/platforms/android-24" \
+		"${unsupported_ndk_directory}/platforms/android-25"
+	
+	ln \
+		--symbolic \
+		"${unsupported_ndk_directory}/platforms/android-19" \
+		"${unsupported_ndk_directory}/platforms/android-20"
 fi
 
 if ! [ -f "${pkg_file}" ]; then
@@ -151,6 +169,42 @@ if ! [ -f "${pkg_file}" ]; then
 		's/__ANDROID_API__ 24/__ANDROID_API__ __ANDROID_API_FUTURE__/g' \
 		'/tmp/data/data/com.termux/files/usr/include/sys/cdefs.h'
 fi
+
+if ! [ -f "${binutils_tarball}" ]; then
+	curl \
+		--url 'https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz' \
+		--retry '30' \
+		--retry-delay '0' \
+		--retry-all-errors \
+		--retry-max-time '0' \
+		--location \
+		--silent \
+		--output "${binutils_tarball}"
+	
+	tar \
+		--directory="$(dirname "${binutils_directory}")" \
+		--extract \
+		--file="${binutils_tarball}"
+fi
+
+for target in "${targets[@]}"; do
+	[ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
+	
+	cd "${binutils_directory}/build"
+	rm --force --recursive ./*
+	
+	../configure \
+		--target="${target}" \
+		--prefix='/tmp' \
+		--disable-gold \
+		--disable-ld \
+		CFLAGS='-Oz' \
+		CXXFLAGS='-Oz' \
+		LDFLAGS='-Xlinker -s'
+	
+	make all --jobs
+	make install
+done
 
 for target in "${targets[@]}"; do
 	declare arch="$(get_arch ${target})"
@@ -222,9 +276,9 @@ for target in "${targets[@]}"; do
 		fi
 		
 		if (( unsupported_ndk )); then
-			remove_symbols "${sysroot_directory}/lib/crtbegin_dynamic.o"
-			remove_symbols "${sysroot_directory}/lib/crtbegin_so.o"
-			remove_symbols "${sysroot_directory}/lib/crtbegin_static.o"
+			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_dynamic.o"
+			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_so.o"
+			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_static.o"
 			
 			patch --directory="${sysroot_directory}/include" --strip='1' --input="${workdir}/patches/0001-Header-fixes.patch"
 		fi
