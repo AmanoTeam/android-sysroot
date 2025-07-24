@@ -1,4 +1,4 @@
-From b071756612db713979738b988fd5e4463138b234 Mon Sep 17 00:00:00 2001
+From 3d7277190bbe13071c5e56bc1f70e2ccea2c55b6 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Sun, 20 Jul 2025 15:16:24 -0300
 Subject: [PATCH] Header fixes
@@ -14,14 +14,15 @@ Subject: [PATCH] Header fixes
  android/legacy_sys_stat_inlines.h  |   2 +-
  android/legacy_sys_wait_inlines.h  |   2 +-
  android/legacy_termios_inlines.h   |   2 +-
- langinfo.h                         |   3 +-
+ ftw.h                              |   4 +
+ langinfo.h                         |   7 +-
  locale.h                           |   4 +-
  math.h                             | 303 ++++++++++++++++++++---------
  string.h                           |   7 +
  sys/cdefs.h                        |   3 +
  sys/mman.h                         |  14 +-
  sys/types.h                        |   1 +
- 17 files changed, 272 insertions(+), 169 deletions(-)
+ 18 files changed, 280 insertions(+), 169 deletions(-)
 
 diff --git a/android/legacy_errno_inlines.h b/android/legacy_errno_inlines.h
 index 9f116fa..f43f12a 100644
@@ -469,11 +470,37 @@ index a63dba1..09bd1ce 100644
  #include <bits/termios_inlines.h>
  
  #endif
+diff --git a/ftw.h b/ftw.h
+index eb2c49f..42879c0 100644
+--- a/ftw.h
++++ b/ftw.h
+@@ -22,6 +22,10 @@
+  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
+  */
+ 
++#if __ANDROID_API__ < 17
++	#error "This implementation requires Android 4.2 (API level 17) or higher"
++#endif
++
+ #ifndef	_FTW_H
+ #define	_FTW_H
+ 
 diff --git a/langinfo.h b/langinfo.h
-index b0ecbf1..8252379 100644
+index b0ecbf1..11dd7f2 100644
 --- a/langinfo.h
 +++ b/langinfo.h
-@@ -36,6 +36,7 @@
+@@ -25,6 +25,10 @@
+  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+  * SUCH DAMAGE.
+  */
++ 
++#if __ANDROID_API__ < 26
++	#error "This implementation requires Android 8.0 (API level 26) or higher"
++#endif
+ 
+ #ifndef _LANGINFO_H_
+ #define _LANGINFO_H_
+@@ -36,6 +40,7 @@
  
  __BEGIN_DECLS
  
@@ -481,7 +508,7 @@ index b0ecbf1..8252379 100644
  #define CODESET 1
  #define D_T_FMT 2
  #define D_FMT 3
-@@ -92,8 +93,6 @@ __BEGIN_DECLS
+@@ -92,8 +97,6 @@ __BEGIN_DECLS
  #define NOEXPR 54
  #define CRNCYSTR 55
  
