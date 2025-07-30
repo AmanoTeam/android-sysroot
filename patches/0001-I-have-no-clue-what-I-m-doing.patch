@@ -1,4 +1,4 @@
-From 61ff611fbb0a9db886ad5541136e6ba5a6ded85b Mon Sep 17 00:00:00 2001
+From 1edd760b4da9c4730c567bcf28a12f809febd2be Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Tue, 29 Jul 2025 21:38:47 -0300
 Subject: [PATCH] I have no clue what I'm doing
@@ -15,7 +15,8 @@ Subject: [PATCH] I have no clue what I'm doing
  string.h                       |   2 +-
  sys/cdefs.h                    |  64 ++++++++++++++++
  sys/mman.h                     |   6 +-
- 11 files changed, 245 insertions(+), 21 deletions(-)
+ time.h                         |   2 +-
+ 12 files changed, 246 insertions(+), 22 deletions(-)
 
 diff --git a/android/versioning.h b/android/versioning.h
 index 1cf6e51..966a1d3 100644
@@ -530,6 +531,19 @@ index 3fe1f9c..596145e 100644
  
  /**
   * mmap64() is a variant of mmap() that takes a 64-bit offset even on LP32.
+diff --git a/time.h b/time.h
+index 777e648..3e94842 100644
+--- a/time.h
++++ b/time.h
+@@ -253,7 +253,7 @@ char* _Nullable strptime(const char* _Nonnull __s, const char* _Nonnull __fmt, s
+ /**
+  * Equivalent to strptime() on Android where only C/POSIX locales are available.
+  */
+-char* _Nullable strptime_l(const char* _Nonnull __s, const char* _Nonnull __fmt, struct tm* _Nonnull __tm, locale_t _Nonnull __l) __strftimelike(2) __RENAME(strptime);
++char* _Nullable strptime_l(const char* _Nonnull __s, const char* _Nonnull __fmt, struct tm* _Nonnull __tm, locale_t _Nonnull __l) __RENAME(strptime) __strftimelike(2);
+ 
+ /**
+  * [strftime(3)](https://man7.org/linux/man-pages/man3/strftime.3.html) formats
 -- 
 2.49.0
 
