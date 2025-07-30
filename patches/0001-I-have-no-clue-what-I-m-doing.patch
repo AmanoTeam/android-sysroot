@@ -1,10 +1,10 @@
-From 1edd760b4da9c4730c567bcf28a12f809febd2be Mon Sep 17 00:00:00 2001
+From eecf52e481aa89ba591a71db702818caecf74cfa Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Tue, 29 Jul 2025 21:38:47 -0300
 Subject: [PATCH] I have no clue what I'm doing
 
 ---
- android/versioning.h           |  13 +---
+ android/versioning.h           |  17 ++---
  bits/bionic_multibyte_result.h |  17 +++++
  bits/ioctl.h                   |   3 +-
  bits/stdatomic.h               | 136 ++++++++++++++++++++++++++++++++-
@@ -16,10 +16,10 @@ Subject: [PATCH] I have no clue what I'm doing
  sys/cdefs.h                    |  64 ++++++++++++++++
  sys/mman.h                     |   6 +-
  time.h                         |   2 +-
- 12 files changed, 246 insertions(+), 22 deletions(-)
+ 12 files changed, 248 insertions(+), 24 deletions(-)
 
 diff --git a/android/versioning.h b/android/versioning.h
-index 1cf6e51..966a1d3 100644
+index 1cf6e51..a97d3a8 100644
 --- a/android/versioning.h
 +++ b/android/versioning.h
 @@ -58,15 +58,10 @@
@@ -42,6 +42,18 @@ index 1cf6e51..966a1d3 100644
  // The same availability attribute can't be annotated multiple times. Therefore, the macros are
  // defined for the configuration that it is valid for so that declarations like the below doesn't
  // cause inconsistent availability values which is an error with -Wavailability:
+@@ -74,9 +69,9 @@
+ // void foo() __INTRODUCED_IN_32(30) __INTRODUCED_IN_64(31);
+ //
+ #if !defined(__LP64__)
+-#define __INTRODUCED_IN_32(api_level) __BIONIC_AVAILABILITY(introduced=api_level)
++#define __INTRODUCED_IN_32(api_level) __attribute__((annotate("introduced_in_32=" #api_level)))
+ #define __INTRODUCED_IN_64(api_level)
+ #else
+ #define __INTRODUCED_IN_32(api_level)
+-#define __INTRODUCED_IN_64(api_level) __BIONIC_AVAILABILITY(introduced=api_level)
++#define __INTRODUCED_IN_64(api_level) __attribute__((annotate("introduced_in_64=" #api_level)))
+ #endif
 diff --git a/bits/bionic_multibyte_result.h b/bits/bionic_multibyte_result.h
 index 930e67c..c49254a 100644
 --- a/bits/bionic_multibyte_result.h
