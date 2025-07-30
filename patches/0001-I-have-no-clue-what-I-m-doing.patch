@@ -1,0 +1,535 @@
+From 61ff611fbb0a9db886ad5541136e6ba5a6ded85b Mon Sep 17 00:00:00 2001
+From: Kartatz <105828205+Kartatz@users.noreply.github.com>
+Date: Tue, 29 Jul 2025 21:38:47 -0300
+Subject: [PATCH] I have no clue what I'm doing
+
+---
+ android/versioning.h           |  13 +---
+ bits/bionic_multibyte_result.h |  17 +++++
+ bits/ioctl.h                   |   3 +-
+ bits/stdatomic.h               | 136 ++++++++++++++++++++++++++++++++-
+ complex.h                      |   6 ++
+ malloc.h                       |   4 +
+ math.h                         |   7 +-
+ stdatomic.h                    |   8 +-
+ string.h                       |   2 +-
+ sys/cdefs.h                    |  64 ++++++++++++++++
+ sys/mman.h                     |   6 +-
+ 11 files changed, 245 insertions(+), 21 deletions(-)
+
+diff --git a/android/versioning.h b/android/versioning.h
+index 1cf6e51..966a1d3 100644
+--- a/android/versioning.h
++++ b/android/versioning.h
+@@ -58,15 +58,10 @@
+ #define __BIONIC_AVAILABILITY_GUARD(api_level) (__ANDROID_MIN_SDK_VERSION__ >= (api_level))
+ #endif
+ 
+-#pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wc23-extensions"
+-// Passing no argument for the '...' parameter of a variadic macro is a C23 extension
+-#define __INTRODUCED_IN(api_level) __BIONIC_AVAILABILITY(introduced=api_level)
+-#pragma clang diagnostic pop
+-
+-#define __DEPRECATED_IN(api_level, msg) __BIONIC_AVAILABILITY(deprecated=api_level, message=msg)
+-#define __REMOVED_IN(api_level, msg) __BIONIC_AVAILABILITY(obsoleted=api_level, message=msg)
+-
++#define __INTRODUCED_IN(api_level) __attribute__((annotate("introduced_in=" #api_level)))
++#define __DEPRECATED_IN(api_level, msg) __attribute__((deprecated("since " #api_level ". " msg)))
++#define __REMOVED_IN(api_level, msg) __DEPRECATED_IN(api_level, msg)
++ 
+ // The same availability attribute can't be annotated multiple times. Therefore, the macros are
+ // defined for the configuration that it is valid for so that declarations like the below doesn't
+ // cause inconsistent availability values which is an error with -Wavailability:
+diff --git a/bits/bionic_multibyte_result.h b/bits/bionic_multibyte_result.h
+index 930e67c..c49254a 100644
+--- a/bits/bionic_multibyte_result.h
++++ b/bits/bionic_multibyte_result.h
+@@ -46,6 +46,7 @@ __BEGIN_DECLS
+  * Refer to C23 7.30.1 Restartable multibyte/wide character conversion functions
+  * for more details.
+  */
++#ifdef __clang__
+ enum : size_t {
+   /// @brief An encoding error occurred. The bytes read are not a valid unicode
+   /// character, nor are they a partially valid character.
+@@ -65,5 +66,21 @@ enum : size_t {
+   BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED = -3UL,
+ #define BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED
+ };
++#else
++/// @brief An encoding error occurred. The bytes read are not a valid unicode
++/// character, nor are they a partially valid character.
++#define BIONIC_MULTIBYTE_RESULT_ILLEGAL_SEQUENCE (size_t(-1UL))
++
++/// @brief The bytes read may produce a valid unicode character, but the
++/// sequence is incomplete. Future calls may complete the character.
++#define BIONIC_MULTIBYTE_RESULT_INCOMPLETE_SEQUENCE (size_t(-2UL))
++
++/// @brief The output of the call was the result of a previous successful
++/// decoding. No new bytes were consumed.
++///
++/// The common case for this return value is when mbrtoc16 returns the low
++/// surrogate of a pair.
++#define BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED (size_t(-3UL))
++#endif
+ 
+ __END_DECLS
+diff --git a/bits/ioctl.h b/bits/ioctl.h
+index ae75880..ad328b0 100644
+--- a/bits/ioctl.h
++++ b/bits/ioctl.h
+@@ -55,7 +55,8 @@ int ioctl(int __fd, int __op, ...);
+  * - defining BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD, which will make the
+  *   overloading go away.
+  */
+-#if !defined(BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD)
++#if defined(__clang__) && __has_extension(overloadable_unmarked) && \
++  !defined(BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD)
+ /* enable_if(1) just exists to break overloading ties. */
+ int ioctl(int __fd, unsigned __op, ...) __overloadable __enable_if(1, "") __RENAME(ioctl);
+ #endif
+diff --git a/bits/stdatomic.h b/bits/stdatomic.h
+index ebdc9e5..6fa9d3f 100644
+--- a/bits/stdatomic.h
++++ b/bits/stdatomic.h
+@@ -49,6 +49,20 @@
+ # include <uchar.h>  /* For char16_t and char32_t.              */
+ #endif
+ 
++
++#ifdef __clang__
++# if __has_extension(c_atomic) || __has_extension(cxx_atomic)
++#  define       __CLANG_ATOMICS
++# else
++#  error "stdatomic.h does not support your compiler"
++# endif
++# if __has_builtin(__sync_swap)
++#  define __HAS_BUILTIN_SYNC_SWAP
++# endif
++#else
++# define __GNUC_ATOMICS
++#endif
++
+ /*
+  * 7.17.1 Atomic lock-free macros.
+  */
+@@ -88,8 +102,13 @@
+  * 7.17.2 Initialization.
+  */
+ 
++#if defined(__CLANG_ATOMICS)
+ #define	ATOMIC_VAR_INIT(value)		(value)
+ #define	atomic_init(obj, value)		__c11_atomic_init(obj, value)
++#else
++#define	ATOMIC_VAR_INIT(value)		{ .__val = (value) }
++#define	atomic_init(obj, value)		((void)((obj)->__val = (value)))
++#endif
+ 
+ /*
+  * Clang and recent GCC both provide predefined macros for the memory
+@@ -141,23 +160,56 @@ typedef enum {
+  */
+ 
+ static __inline void atomic_thread_fence(memory_order __order __attribute__((__unused__))) {
++#ifdef __CLANG_ATOMICS
+ 	__c11_atomic_thread_fence(__order);
++#elif defined(__GNUC_ATOMICS)
++	__atomic_thread_fence(__order);
++#else
++	__sync_synchronize();
++#endif
+ }
+ 
+ static __inline void atomic_signal_fence(memory_order __order __attribute__((__unused__))) {
++#ifdef __CLANG_ATOMICS
+ 	__c11_atomic_signal_fence(__order);
++#elif defined(__GNUC_ATOMICS)
++	__atomic_signal_fence(__order);
++#else
++	__asm volatile ("" ::: "memory");
++#endif
+ }
+ 
+ /*
+  * 7.17.5 Lock-free property.
+  */
+ 
+-#define	atomic_is_lock_free(obj) __c11_atomic_is_lock_free(sizeof(*(obj)))
++#if defined(_KERNEL)
++/* Atomics in kernelspace are always lock-free. */
++#define	atomic_is_lock_free(obj) \
++	((void)(obj), (_Bool)1)
++#elif defined(__CLANG_ATOMICS)
++#define	atomic_is_lock_free(obj) \
++	__c11_atomic_is_lock_free(sizeof(*(obj)))
++#elif defined(__GNUC_ATOMICS)
++#define	atomic_is_lock_free(obj) \
++	__atomic_is_lock_free(sizeof((obj)->__val), &(obj)->__val)
++#else
++#define	atomic_is_lock_free(obj) \
++	((void)(obj), sizeof((obj)->__val) <= sizeof(void *))
++#endif
+ 
+ /*
+  * 7.17.6 Atomic integer types.
+  */
+ 
++#ifndef __CLANG_ATOMICS
++/*
++ * No native support for _Atomic(). Place object in structure to prevent
++ * most forms of direct non-atomic access.
++ */
++#define _Atomic(T)              struct { T volatile __val; }
++#endif
++
+ typedef _Atomic(bool)			atomic_bool;
+ typedef _Atomic(char)			atomic_char;
+ typedef _Atomic(signed char)		atomic_schar;
+@@ -206,6 +258,7 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
+  * Compiler-specific operations.
+  */
+ 
++#if defined(__CLANG_ATOMICS)
+ #define	atomic_compare_exchange_strong_explicit(object, expected,	\
+     desired, success, failure)						\
+ 	__c11_atomic_compare_exchange_strong(object, expected, desired,	\
+@@ -230,11 +283,91 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
+ 	__c11_atomic_load(object, order)
+ #define	atomic_store_explicit(object, desired, order)			\
+ 	__c11_atomic_store(object, desired, order)
++#elif defined(__GNUC_ATOMICS)
++#define	atomic_compare_exchange_strong_explicit(object, expected,	\
++    desired, success, failure)						\
++	__atomic_compare_exchange_n(&(object)->__val, expected,		\
++	    desired, 0, success, failure)
++#define	atomic_compare_exchange_weak_explicit(object, expected,		\
++    desired, success, failure)						\
++	__atomic_compare_exchange_n(&(object)->__val, expected,		\
++	    desired, 1, success, failure)
++#define	atomic_exchange_explicit(object, desired, order)		\
++	__atomic_exchange_n(&(object)->__val, desired, order)
++#define	atomic_fetch_add_explicit(object, operand, order)		\
++	__atomic_fetch_add(&(object)->__val, operand, order)
++#define	atomic_fetch_and_explicit(object, operand, order)		\
++	__atomic_fetch_and(&(object)->__val, operand, order)
++#define	atomic_fetch_or_explicit(object, operand, order)		\
++	__atomic_fetch_or(&(object)->__val, operand, order)
++#define	atomic_fetch_sub_explicit(object, operand, order)		\
++	__atomic_fetch_sub(&(object)->__val, operand, order)
++#define	atomic_fetch_xor_explicit(object, operand, order)		\
++	__atomic_fetch_xor(&(object)->__val, operand, order)
++#define	atomic_load_explicit(object, order)				\
++	__atomic_load_n(&(object)->__val, order)
++#define	atomic_store_explicit(object, desired, order)			\
++	__atomic_store_n(&(object)->__val, desired, order)
++#else
++#define	__atomic_apply_stride(object, operand) \
++	(((__typeof__((object)->__val))0) + (operand))
++#define	atomic_compare_exchange_strong_explicit(object, expected,	\
++    desired, success, failure)	__extension__ ({			\
++	__typeof__(expected) __ep = (expected);				\
++	__typeof__(*__ep) __e = *__ep;					\
++	(void)(success); (void)(failure);				\
++	(bool)((*__ep = __sync_val_compare_and_swap(&(object)->__val,	\
++	    __e, desired)) == __e);					\
++})
++#define	atomic_compare_exchange_weak_explicit(object, expected,		\
++    desired, success, failure)						\
++	atomic_compare_exchange_strong_explicit(object, expected,	\
++		desired, success, failure)
++#ifdef __HAS_BUILTIN_SYNC_SWAP
++/* Clang provides a full-barrier atomic exchange - use it if available. */
++#define	atomic_exchange_explicit(object, desired, order)		\
++	((void)(order), __sync_swap(&(object)->__val, desired))
++#else
++/*
++ * __sync_lock_test_and_set() is only an acquire barrier in theory (although in
++ * practice it is usually a full barrier) so we need an explicit barrier before
++ * it.
++ */
++#define	atomic_exchange_explicit(object, desired, order)		\
++__extension__ ({							\
++	__typeof__(object) __o = (object);				\
++	__typeof__(desired) __d = (desired);				\
++	(void)(order);							\
++	__sync_synchronize();						\
++	__sync_lock_test_and_set(&(__o)->__val, __d);			\
++})
++#endif
++#define	atomic_fetch_add_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_add(&(object)->__val,		\
++	    __atomic_apply_stride(object, operand)))
++#define	atomic_fetch_and_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_and(&(object)->__val, operand))
++#define	atomic_fetch_or_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_or(&(object)->__val, operand))
++#define	atomic_fetch_sub_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_sub(&(object)->__val,		\
++	    __atomic_apply_stride(object, operand)))
++#define	atomic_fetch_xor_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_xor(&(object)->__val, operand))
++#define	atomic_load_explicit(object, order)				\
++	((void)(order), __sync_fetch_and_add(&(object)->__val, 0))
++#define	atomic_store_explicit(object, desired, order)			\
++	((void)atomic_exchange_explicit(object, desired, order))
++#endif
+ 
+ /*
+  * Convenience functions.
++ *
++ * Don't provide these in kernel space. In kernel space, we should be
++ * disciplined enough to always provide explicit barriers.
+  */
+ 
++#ifndef _KERNEL
+ #define	atomic_compare_exchange_strong(object, expected, desired)	\
+ 	atomic_compare_exchange_strong_explicit(object, expected,	\
+ 	    desired, memory_order_seq_cst, memory_order_seq_cst)
+@@ -257,6 +390,7 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
+ 	atomic_load_explicit(object, memory_order_seq_cst)
+ #define	atomic_store(object, desired)					\
+ 	atomic_store_explicit(object, desired, memory_order_seq_cst)
++#endif /* !_KERNEL */
+ 
+ /*
+  * 7.17.8 Atomic flag type and operations.
+diff --git a/complex.h b/complex.h
+index 1115862..7415d74 100644
+--- a/complex.h
++++ b/complex.h
+@@ -44,9 +44,15 @@ _Static_assert(__generic(_Complex_I, float _Complex, 1, 0),
+ #define	I		_Complex_I
+ 
+ #if __STDC_VERSION__ >= 201112L
++#ifdef __clang__
+ #define	CMPLX(x, y)	((double complex){ x, y })
+ #define	CMPLXF(x, y)	((float complex){ x, y })
+ #define	CMPLXL(x, y)	((long double complex){ x, y })
++#else
++#define	CMPLX(x, y)	__builtin_complex((double)(x), (double)(y))
++#define	CMPLXF(x, y)	__builtin_complex((float)(x), (float)(y))
++#define	CMPLXL(x, y)	__builtin_complex((long double)(x), (long double)(y))
++#endif
+ #endif
+ 
+ __BEGIN_DECLS
+diff --git a/malloc.h b/malloc.h
+index ba68401..4de6f35 100644
+--- a/malloc.h
++++ b/malloc.h
+@@ -31,7 +31,11 @@
+ 
+ __BEGIN_DECLS
+ 
++#if defined(__clang__) && !__has_attribute(alloc_size)
+ #define __BIONIC_ALLOC_SIZE(...) __attribute__((__alloc_size__(__VA_ARGS__)))
++#else
++#define __BIONIC_ALLOC_SIZE(...)
++#endif
+ 
+ /**
+  * [malloc(3)](https://man7.org/linux/man-pages/man3/malloc.3.html) allocates
+diff --git a/math.h b/math.h
+index 59161bf..3b08527 100644
+--- a/math.h
++++ b/math.h
+@@ -62,14 +62,13 @@ typedef __float_t float_t;
+ 
+ #define isfinite(x) __builtin_isfinite(x)
+ 
+-#define isinf(x) __builtin_isinf(x)
+-
+-#define isnan(x) __builtin_isnan(x)
+-
+ #define isnormal(x) __builtin_isnormal(x)
+ 
+ #define signbit(x) __builtin_signbit(x)
+ 
++__extern_inline__ int isinf(double __x) { return __builtin_isinf(__x); }
++__extern_inline__ int isnan(double __x) { return __builtin_isnan(__x); }
++
+ double acos(double __x);
+ float acosf(float __x);
+ long double acosl(long double __x);
+diff --git a/stdatomic.h b/stdatomic.h
+index b7dac4a..d6b0f38 100644
+--- a/stdatomic.h
++++ b/stdatomic.h
+@@ -32,8 +32,12 @@
+ 
+ #include <sys/cdefs.h>
+ 
+-#if defined(__cplusplus) && __cplusplus >= 201103L && __has_include(<atomic>)
+-# if __has_feature(cxx_atomic)
++#if defined(__cplusplus) && __cplusplus >= 201103L && defined(_USING_LIBCXX)
++# ifdef __clang__
++#  if __has_feature(cxx_atomic)
++#   define _STDATOMIC_HAVE_ATOMIC
++#  endif
++# else /* gcc */
+ #  define _STDATOMIC_HAVE_ATOMIC
+ # endif
+ #endif
+diff --git a/string.h b/string.h
+index a0a7cc4..8a6e8cd 100644
+--- a/string.h
++++ b/string.h
+@@ -239,7 +239,7 @@ char* _Nonnull basename(const char* _Nonnull __path) __RENAME(__gnu_basename) __
+ #endif
+ 
+ /* Const-correct overloads. Placed after FORTIFY so we call those functions, if possible. */
+-#if defined(__cplusplus)
++#if defined(__cplusplus) && defined(__clang__)
+ /* libcxx tries to provide these. Suppress that, since libcxx's impl doesn't respect FORTIFY. */
+ #define __CORRECT_ISO_CPP_STRING_H_PROTO
+ /* Used to make these preferable over regular <string.h> signatures for overload resolution. */
+diff --git a/sys/cdefs.h b/sys/cdefs.h
+index 9bd35bb..59513fa 100644
+--- a/sys/cdefs.h
++++ b/sys/cdefs.h
+@@ -42,6 +42,29 @@
+  */
+ #define __BIONIC__ 1
+ 
++#ifndef __has_extension
++#define __has_extension         __has_feature
++#endif
++#ifndef __has_feature
++#define __has_feature(x)        0
++#endif
++#ifndef __has_include
++#define __has_include(x)        0
++#endif
++#ifndef __has_builtin
++#define __has_builtin(x)        0
++#endif
++#ifndef __has_attribute
++#define __has_attribute(x)      0
++#endif
++
++#if !defined(__clang__)
++// TODO: Replace all the functions use _Nonnull with __nonnull__
++#define _Nonnull
++#define _Nullable
++#define _Null_unspecified
++#endif
++
+ #if defined(__cplusplus)
+ #define __BEGIN_DECLS extern "C" {
+ #define __END_DECLS }
+@@ -143,12 +166,25 @@
+ #define __nodiscard __attribute__((__warn_unused_result__))
+ #define __wur __nodiscard
+ 
++#ifdef __clang__
+ #define __errorattr(msg) __attribute__((__unavailable__(msg)))
+ #define __warnattr(msg) __attribute__((__deprecated__(msg)))
+ #define __warnattr_real(msg) __attribute__((__deprecated__(msg)))
+ #define __enable_if(cond, msg) __attribute__((__enable_if__(cond, msg)))
+ #define __clang_error_if(cond, msg) __attribute__((__diagnose_if__(cond, msg, "error")))
+ #define __clang_warning_if(cond, msg) __attribute__((__diagnose_if__(cond, msg, "warning")))
++#else
++#  define __errorattr(msg) __attribute__((__error__(msg)))
++#  define __warnattr(msg) __attribute__((__warning__(msg)))
++#  define __warnattr_real __warnattr
++/* enable_if doesn't exist on other compilers; give an error if it's used. */
++/* diagnose_if doesn't exist either, but it's often tagged on non-clang-specific functions */
++#  define __clang_error_if(cond, msg)
++#  define __clang_warning_if(cond, msg)
++
++/* errordecls really don't work as well in clang as they do in GCC. */
++#  define __errordecl(name, msg) extern void name(void) __errorattr(msg)
++#endif
+ 
+ #if defined(ANDROID_STRICT)
+ /*
+@@ -252,6 +288,7 @@
+ 
+ #if defined(__BIONIC_FORTIFY)
+ #  define __bos0(s) __bosn((s), 0)
++#if defined(__clang__)
+ #  define __pass_object_size_n(n) __attribute__((__pass_object_size__(n)))
+ /*
+  * FORTIFY'ed functions all have either enable_if or pass_object_size, which
+@@ -276,6 +313,18 @@
+ /* Error functions don't have bodies, so they can just be static. */
+ #  define __BIONIC_ERROR_FUNCTION_VISIBILITY static __unused
+ #else
++/*
++ * Where they can, GCC and clang-style FORTIFY share implementations.
++ * So, make these nops in GCC.
++ */
++#  define __pass_object_size_n(n)
++#  define __call_bypassing_fortify(fn) (fn)
++/* __BIONIC_FORTIFY_NONSTATIC_INLINE is pointless in GCC's FORTIFY */
++#  define __BIONIC_FORTIFY_INLINE extern __inline__ __always_inline __attribute__((gnu_inline)) __attribute__((__artificial__))
++/* __always_inline is probably okay and ignored by gcc in __BIONIC_FORTIFY_VARIADIC */
++#  define __BIONIC_FORTIFY_VARIADIC __BIONIC_FORTIFY_INLINE
++#endif
++#else
+ /* Further increase sharing for some inline functions */
+ #  define __pass_object_size_n(n)
+ #endif
+@@ -304,7 +353,16 @@
+ #  define __BIONIC_INCLUDE_FORTIFY_HEADERS 1
+ #endif
+ 
++#if !defined(__clang__) && defined(__BIONIC_INCLUDE_FORTIFY_HEADERS)
++#undef __BIONIC_INCLUDE_FORTIFY_HEADERS
++/* #warning "Fortify headers are not supported and will not used without clang." */
++#endif
++
++#if defined(__clang__)
+ #define __overloadable __attribute__((__overloadable__))
++#else
++#define __overloadable
++#endif
+ 
+ #define __diagnose_as_builtin(...) __attribute__((__diagnose_as_builtin__(__VA_ARGS__)))
+ 
+@@ -324,6 +382,7 @@
+ /* Used to rename functions so that the compiler emits a call to 'x' rather than the function this was applied to. */
+ #define __RENAME(x) __asm__(#x)
+ 
++#if defined(__clang__)
+ /*
+  * Used when we need to check for overflow when multiplying x and y. This
+  * should only be used where __builtin_umull_overflow can not work, because it makes
+@@ -332,9 +391,14 @@
+  * __builtin_umull_overflow.
+  */
+ #define __unsafe_check_mul_overflow(x, y) ((__SIZE_TYPE__)-1 / (x) < (y))
++#endif
+ 
+ #include <android/versioning.h>
+ #include <android/api-level.h>
+ #if __has_include(<android/ndk-version.h>)
+ #include <android/ndk-version.h>
+ #endif
++
++#define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
++
++#define __BIONIC_PREREQ(version)  (version >= __ANDROID_API__)
+diff --git a/sys/mman.h b/sys/mman.h
+index 3fe1f9c..596145e 100644
+--- a/sys/mman.h
++++ b/sys/mman.h
+@@ -49,11 +49,11 @@ __BEGIN_DECLS
+  * Returns the address of the mapping on success,
+  * and returns `MAP_FAILED` and sets `errno` on failure.
+  */
++void* _Nonnull mmap(void* _Nullable __addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset)
+ #if defined(__USE_FILE_OFFSET64)
+-void* _Nonnull mmap(void* _Nullable __addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset) __RENAME(mmap64);
+-#else
+-void* _Nonnull mmap(void* _Nullable __addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset);
++	__RENAME(mmap64)
+ #endif
++;
+ 
+ /**
+  * mmap64() is a variant of mmap() that takes a 64-bit offset even on LP32.
+-- 
+2.49.0
+

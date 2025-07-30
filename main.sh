@@ -40,10 +40,8 @@ declare -r versions=(
 	'35'
 )
 
-declare -r pkg_file='/tmp/pkg.deb'
-
 declare -r ndk_archive='/tmp/ndk.zip'
-declare -r ndk_directory='/tmp/android-ndk-r27c'
+declare -r ndk_directory='/tmp/android-ndk-r29-beta2'
 declare -r unsupported_ndk_directory='/tmp/android-ndk-r16b'
 
 declare -r workdir="${PWD}"
@@ -95,7 +93,7 @@ function remove_symbols() {
 
 if ! [ -f "${ndk_archive}" ]; then
 	curl \
-		--url 'https://dl.google.com/android/repository/android-ndk-r27c-linux.zip' \
+		--url 'https://dl.google.com/android/repository/android-ndk-r29-beta2-linux.zip' \
 		--retry '30' \
 		--retry-all-errors \
 		--retry-delay '0' \
@@ -108,6 +106,11 @@ if ! [ -f "${ndk_archive}" ]; then
 		-d "$(dirname "${ndk_directory}")" \
 		-q \
 		"${ndk_archive}"
+	
+	patch \
+		--directory="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" \
+		--strip='1' \
+		--input="${workdir}/patches/0001-I-have-no-clue-what-I-m-doing.patch"
 	
 	curl \
 		--url 'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip' \
@@ -133,41 +136,6 @@ if ! [ -f "${ndk_archive}" ]; then
 		--symbolic \
 		"${unsupported_ndk_directory}/platforms/android-19" \
 		"${unsupported_ndk_directory}/platforms/android-20"
-fi
-
-if ! [ -f "${pkg_file}" ]; then
-	curl \
-		--url 'https://github.com/termux-user-repository/dists/releases/download/0.1/ndk-sysroot-gcc-compact_27b-3_arm.deb' \
-		--retry '30' \
-		--retry-all-errors \
-		--retry-delay '0' \
-		--retry-max-time '0' \
-		--location \
-		--silent \
-		--output "${pkg_file}"
-	
-	ar x "${pkg_file}"
-	
-	sudo tar \
-		--dereference \
-		--no-same-owner \
-		--no-overwrite-dir \
-		--no-same-permissions \
-		--directory="$(dirname "${pkg_file}")" \
-		--extract \
-		--file='./data.tar.xz'
-	
-	sudo chown "${USER}:${USER}" -R '/tmp'
-	
-	sed \
-		--in-place \
-		'/#warning/d' \
-		'/tmp/data/data/com.termux/files/usr/include/sys/cdefs.h'
-	
-	sed \
-		--in-place \
-		's/__ANDROID_API__ 24/__ANDROID_API__ __ANDROID_API_FUTURE__/g' \
-		'/tmp/data/data/com.termux/files/usr/include/sys/cdefs.h'
 fi
 
 if ! [ -f "${binutils_tarball}" ]; then
@@ -233,7 +201,7 @@ for target in "${targets[@]}"; do
 		if (( unsupported_ndk )); then
 			include_directory="${unsupported_ndk_directory}/sysroot/usr/include"
 		else
-			include_directory='/tmp/data/data/com.termux/files/usr/include'
+			include_directory="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
 		fi
 		
 		cp \
