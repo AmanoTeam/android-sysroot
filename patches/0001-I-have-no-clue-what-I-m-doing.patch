@@ -1,9 +1,10 @@
-From eecf52e481aa89ba591a71db702818caecf74cfa Mon Sep 17 00:00:00 2001
+From c05474260243328bac4a55b80a28ee3b9b2b41b3 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Tue, 29 Jul 2025 21:38:47 -0300
 Subject: [PATCH] I have no clue what I'm doing
 
 ---
+ SLES/OpenSLES_Platform.h       |   2 +-
  android/versioning.h           |  17 ++---
  bits/bionic_multibyte_result.h |  17 +++++
  bits/ioctl.h                   |   3 +-
@@ -16,8 +17,21 @@ Subject: [PATCH] I have no clue what I'm doing
  sys/cdefs.h                    |  64 ++++++++++++++++
  sys/mman.h                     |   6 +-
  time.h                         |   2 +-
- 12 files changed, 248 insertions(+), 24 deletions(-)
+ 13 files changed, 249 insertions(+), 25 deletions(-)
 
+diff --git a/SLES/OpenSLES_Platform.h b/SLES/OpenSLES_Platform.h
+index 5dc3006..3f51c2d 100644
+--- a/SLES/OpenSLES_Platform.h
++++ b/SLES/OpenSLES_Platform.h
+@@ -55,7 +55,7 @@ typedef unsigned long long          sl_uint64_t;
+ #endif
+ 
+ #ifndef SL_API_DEPRECATED
+-#define SL_API_DEPRECATED(level) __attribute__((availability(android,deprecated=level)))
++#define SL_API_DEPRECATED(level) __attribute__((deprecated("since " #level)))
+ #endif
+ 
+ #endif /* _OPENSLES_PLATFORM_H_ */
 diff --git a/android/versioning.h b/android/versioning.h
 index 1cf6e51..a97d3a8 100644
 --- a/android/versioning.h
