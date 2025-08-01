@@ -161,7 +161,6 @@ if ! [ -f "${binutils_tarball}" ]; then
 fi
 
 for target in "${targets[@]}"; do
-	continue
 	[ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
 	
 	cd "${binutils_directory}/build"
