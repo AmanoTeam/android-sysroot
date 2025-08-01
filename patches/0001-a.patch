@@ -1,4 +1,4 @@
-From c419bac4cbb9a8d579e20b473a8ccd6339a180d3 Mon Sep 17 00:00:00 2001
+From 6e9005658200b4b550daeab2d265f4a0a2b261a7 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 31 Jul 2025 21:24:54 -0300
 Subject: [PATCH] a
@@ -8,7 +8,7 @@ Subject: [PATCH] a
  android/dlext.h                    |   4 +-
  android/legacy_fenv_inlines_arm.h  | 156 ++++++++++++++++
  android/legacy_fenv_inlines_mips.h | 170 +++++++++++++++++
- android/legacy_signal_inlines.h    | 124 ++++++++++++
+ android/legacy_signal_inlines.h    | 130 +++++++++++++
  android/legacy_sys_stat_inlines.h  |  48 +++++
  android/legacy_sys_wait_inlines.h  |  50 +++++
  android/set_abort_message.h        |   2 +-
@@ -42,7 +42,7 @@ Subject: [PATCH] a
  string.h                           |  12 +-
  sys/auxv.h                         |   4 +-
  sys/cachectl.h                     |   3 +
- sys/cdefs.h                        |   3 +-
+ sys/cdefs.h                        |   5 +-
  sys/endian.h                       |  12 +-
  sys/epoll.h                        |   8 +-
  sys/fsuid.h                        |   6 +-
@@ -68,7 +68,7 @@ Subject: [PATCH] a
  unistd.h                           |  58 ++++--
  wchar.h                            |  63 +++++--
  wctype.h                           |  38 ++--
- 64 files changed, 1737 insertions(+), 262 deletions(-)
+ 64 files changed, 1746 insertions(+), 261 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -456,10 +456,10 @@ index 0000000..9de7315
 +#endif /* ANDROID_LEGACY_FENV_INLINES_MIPS_H */
 diff --git a/android/legacy_signal_inlines.h b/android/legacy_signal_inlines.h
 new file mode 100644
-index 0000000..562b6fe
+index 0000000..151e13c
 --- /dev/null
 +++ b/android/legacy_signal_inlines.h
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,130 @@
 +/*
 + * Copyright (C) 2015 The Android Open Source Project
 + * All rights reserved.
@@ -498,6 +498,12 @@ index 0000000..562b6fe
 +#include <errno.h>
 +#include <signal.h>
 +#include <string.h>
++
++/* Our kernel headers are missing these defines */
++#if defined(__mips__) && !defined(__LP64__)
++	#define __SIGRTMIN 32
++	#define __SIGRTMAX 64
++#endif
 +
 +__BEGIN_DECLS
 +
@@ -2758,16 +2764,20 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 59513fa..3e9b37c 100644
+index 59513fa..e5d029b 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
-@@ -400,5 +400,4 @@
+@@ -400,5 +400,8 @@
  #endif
  
  #define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
--
--#define __BIONIC_PREREQ(version)  (version >= __ANDROID_API__)
 +#define __static_inline__ static __inline
+ 
+-#define __BIONIC_PREREQ(version)  (version >= __ANDROID_API__)
++#if !__BIONIC_AVAILABILITY_GUARD(__ANDROID_API_G__)
++	#define __INTRODUCED_IN_API_G__ __attribute__((__error__("This symbol is only available in Android 2.3.0 (API level " ___STRING(ANDROID_API_G) ") or higher.")));
++#endif
+\ No newline at end of file
 diff --git a/sys/endian.h b/sys/endian.h
 index 1c7448c..cb6cd38 100644
 --- a/sys/endian.h
