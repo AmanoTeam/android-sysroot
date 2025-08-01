@@ -1,4 +1,4 @@
-From 49a6a342c403b09875b5a61931cfb106c5c99119 Mon Sep 17 00:00:00 2001
+From 6a3f3700802fcdb18b63303b6fb778758b5d6681 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -24,7 +24,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  bits/stdlib_inlines.h              |  47 ++++-
  bits/wctype.h                      |   6 +-
  complex.h                          |   6 +
- ctype.h                            |  34 ++--
+ ctype.h                            |   2 +-
  dirent.h                           |  14 +-
  fcntl.h                            |  33 ++--
  fenv.h                             |  38 ++--
@@ -74,7 +74,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                           |  58 ++++--
  wchar.h                            |  63 +++++--
  wctype.h                           |  38 ++--
- 70 files changed, 1989 insertions(+), 284 deletions(-)
+ 70 files changed, 1973 insertions(+), 268 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -1283,7 +1283,7 @@ index 1115862..7415d74 100644
  
  __BEGIN_DECLS
 diff --git a/ctype.h b/ctype.h
-index dc3f673..09d943d 100644
+index dc3f673..d6b5daa 100644
 --- a/ctype.h
 +++ b/ctype.h
 @@ -42,7 +42,7 @@
@@ -1295,111 +1295,6 @@ index dc3f673..09d943d 100644
  #endif
  
  /** Internal implementation detail. Do not use. */
-@@ -78,7 +78,7 @@ extern const char* _ctype_;
-  *
-  * Prefer tolower() instead.
-  */
--__BIONIC_CTYPE_INLINE int _tolower(int __ch) {
-+__BIONIC_CTYPE_INLINE int _tolower(int __ch) __INTRODUCED_IN(21) {
-   return __ch | 0x20;
- }
- 
-@@ -87,7 +87,7 @@ __BIONIC_CTYPE_INLINE int _tolower(int __ch) {
-  *
-  * Prefer toupper() instead.
-  */
--__BIONIC_CTYPE_INLINE int _toupper(int __ch) {
-+__BIONIC_CTYPE_INLINE int _toupper(int __ch) __INTRODUCED_IN(21) {
-   // Using EOR rather than AND makes no difference on arm, but saves an
-   // instruction on arm64.
-   return __ch ^ 0x20;
-@@ -180,72 +180,72 @@ __BIONIC_CTYPE_INLINE int toascii(int __ch) {
- }
- 
- /** Like isalnum() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isalnum_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isalnum_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isalnum(__ch);
- }
- 
- /** Like isalpha() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isalpha_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isalpha_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isalpha(__ch);
- }
- 
- /** Like isblank() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isblank_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isblank_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isblank(__ch);
- }
- 
- /** Like iscntrl() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int iscntrl_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int iscntrl_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return iscntrl(__ch);
- }
- 
- /** Like isdigit() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isdigit_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isdigit_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isdigit(__ch);
- }
- 
- /** Like isgraph() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isgraph_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isgraph_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isgraph(__ch);
- }
- 
- /** Like islower() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int islower_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int islower_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return islower(__ch);
- }
- 
- /** Like isprint() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isprint_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isprint_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isprint(__ch);
- }
- 
- /** Like ispunct() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int ispunct_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int ispunct_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return ispunct(__ch);
- }
- 
- /** Like isspace() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isspace_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isspace_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isspace(__ch);
- }
- 
- /** Like isupper() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isupper_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isupper_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isupper(__ch);
- }
- 
- /** Like isxdigit() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int isxdigit_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int isxdigit_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return isxdigit(__ch);
- }
- 
- /** Like tolower() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int tolower_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int tolower_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return tolower(__ch);
- }
- 
- /** Like toupper() but with an ignored `locale_t`. */
--__BIONIC_CTYPE_INLINE int toupper_l(int __ch, locale_t __l) {
-+__BIONIC_CTYPE_INLINE int toupper_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
-   return toupper(__ch);
- }
- 
 diff --git a/dirent.h b/dirent.h
 index af22fb3..5300dd5 100644
 --- a/dirent.h
