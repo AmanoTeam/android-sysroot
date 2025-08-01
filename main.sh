@@ -179,8 +179,8 @@ for target in "${targets[@]}"; do
 	make install
 done
 
-declare -r include_directory_new="${unsupported_ndk_directory}/sysroot/usr/include"
-declare -r include_directory_old="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
+declare -r include_directory_old="${unsupported_ndk_directory}/sysroot/usr/include"
+declare -r include_directory_new="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
 
 for target in "${targets[@]}"; do
 	declare arch="$(get_arch ${target})"
