@@ -2,6 +2,11 @@
 
 set -eu
 
+declare -r debian_sysroot_tarball='/tmp/sysroot.tar.xz'
+
+declare -r mipsel_sysroot='/tmp/mipsel-unknown-linux-gnu2.31'
+declare -r mips64_sysroot='/tmp/mips64el-unknown-linux-gnuabi642.31'
+
 declare -r binutils_tarball='/tmp/binutils.tar.xz'
 declare -r binutils_directory='/tmp/binutils-with-gold-2.44'
 
@@ -160,6 +165,44 @@ if ! [ -f "${binutils_tarball}" ]; then
 		--file="${binutils_tarball}"
 fi
 
+if ! [ -f "${debian_sysroot_tarball}" ]; then
+	curl \
+		--url 'https://github.com/AmanoTeam/debian-sysroot/releases/download/1.8/mipsel-unknown-linux-gnu2.31.tar.xz' \
+		--retry '30' \
+		--retry-delay '0' \
+		--retry-all-errors \
+		--retry-max-time '0' \
+		--location \
+		--silent \
+		--output "${debian_sysroot_tarball}"
+	
+	tar \
+		--directory="$(dirname "${mipsel_sysroot}")" \
+		--extract \
+		--file="${debian_sysroot_tarball}"
+	
+	curl \
+		--url 'https://github.com/AmanoTeam/debian-sysroot/releases/download/1.8/mips64el-unknown-linux-gnuabi642.31.tar.xz' \
+		--retry '30' \
+		--retry-delay '0' \
+		--retry-all-errors \
+		--retry-max-time '0' \
+		--location \
+		--silent \
+		--output "${debian_sysroot_tarball}"
+	
+	tar \
+		--directory="$(dirname "${mips64_sysroot}")" \
+		--extract \
+		--file="${debian_sysroot_tarball}"
+	
+	sed \
+		--in-place \
+		's/ sigaction / __kernel_sigaction /g' \
+		"${mips64_sysroot}/include/asm/signal.h" \
+		"${mipsel_sysroot}/include/asm/signal.h"
+fi
+
 for target in "${targets[@]}"; do
 	[ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
 	
@@ -220,37 +263,28 @@ for target in "${targets[@]}"; do
 		cd "${sysroot_directory}/include"
 		
 		if [[ "${target}" = 'mips'* ]]; then
-			rm --recursive 'asm-generic'
+			rm --recursive 'asm'*
+			
+			if [ "${target}" = 'mips64el-unknown-linux-android' ]; then
+				declare sysroot="${mips64_sysroot}"
+			else
+				declare sysroot="${mipsel_sysroot}"
+			fi
 			
 			cp \
 				--recursive \
-				"${include_directory}/asm-generic" \
+				"${sysroot}/include/asm"* \
 				'./'
+		else
+			for name in *'-linux-android'*; do
+				if [ "${name}" != "${triplet}" ]; then
+					rm --recursive "${name}"
+					continue
+				fi
+				
+				mv "${name}/"* './' && rmdir "${name}"
+			done
 		fi
-		
-		for name in "${include_directory}/"*'-linux-android'*; do
-			base=$(basename ${name})
-			
-			if [ -d "./${base}" ]; then
-				continue
-			fi
-			
-			cp \
-			--recursive \
-			"${name}" \
-			'./'
-		done
-		
-		
-		
-		for name in *-linux-android*; do
-			if [ "${name}" != "${triplet}" ]; then
-				rm --recursive "${name}"
-				continue
-			fi
-			
-			mv "${name}/"* './' && rmdir "${name}"
-		done
 		
 		declare library_directory=''
 		declare library_directory2=''
