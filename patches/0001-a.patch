@@ -1,4 +1,4 @@
-From ecc2ff7fa20717289918cffc4619ff09b29777f0 Mon Sep 17 00:00:00 2001
+From c419bac4cbb9a8d579e20b473a8ccd6339a180d3 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 31 Jul 2025 21:24:54 -0300
 Subject: [PATCH] a
@@ -17,7 +17,7 @@ Subject: [PATCH] a
  bits/fenv_mips.h                   |  98 ++++++++++
  bits/glibc-syscalls.h              |   3 +
  bits/signal_types.h                |   2 +-
- bits/stdlib_inlines.h              |  49 ++++-
+ bits/stdlib_inlines.h              |  47 ++++-
  bits/wctype.h                      |   6 +-
  ctype.h                            |  36 ++--
  dirent.h                           |  14 +-
@@ -42,7 +42,7 @@ Subject: [PATCH] a
  string.h                           |  12 +-
  sys/auxv.h                         |   4 +-
  sys/cachectl.h                     |   3 +
- sys/cdefs.h                        |   4 +-
+ sys/cdefs.h                        |   3 +-
  sys/endian.h                       |  12 +-
  sys/epoll.h                        |   8 +-
  sys/fsuid.h                        |   6 +-
@@ -68,7 +68,7 @@ Subject: [PATCH] a
  unistd.h                           |  58 ++++--
  wchar.h                            |  63 +++++--
  wctype.h                           |  38 ++--
- 64 files changed, 1739 insertions(+), 263 deletions(-)
+ 64 files changed, 1737 insertions(+), 262 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -873,10 +873,10 @@ index 41a697e..1223d8a 100644
  #define __SIGACTION_BODY \
    int sa_flags; \
 diff --git a/bits/stdlib_inlines.h b/bits/stdlib_inlines.h
-index fffca19..e6cc28c 100644
+index fffca19..42ae7db 100644
 --- a/bits/stdlib_inlines.h
 +++ b/bits/stdlib_inlines.h
-@@ -28,21 +28,58 @@
+@@ -28,21 +28,56 @@
  
  #pragma once
  
@@ -908,15 +908,13 @@ index fffca19..e6cc28c 100644
 +
 +__static_inline__ double atof(const char *nptr) { return (strtod(nptr, NULL)); }
 +
-+__static_inline__ int abs(int __n) { return (__n < 0) ? -__n : __n; }
++__static_inline__ int abs(int __n) { return __builtin_abs(__n); }
 +
-+__static_inline__ long labs(long __n) { return (__n < 0L) ? -__n : __n; }
++__static_inline__ long labs(long __n) { return __builtin_labs(__n); }
 +
-+__static_inline__ long long llabs(long long __n) {
-+  return (__n < 0LL) ? -__n : __n;
-+}
++__static_inline__ long long llabs(long long __n) { return __builtin_llabs(__n); }
 +
-+__static_inline__ int rand(void) { return (int)lrand48(); }
++__static_inline__ int rand(void) { return (int) lrand48(); }
 +
 +__static_inline__ void srand(unsigned int __s) { srand48(__s); }
 +
@@ -1564,7 +1562,7 @@ index 4de6f35..1f2e33a 100644
  #define __MALLINFO_BODY \
    /** Total number of non-mmapped bytes currently allocated from OS. */ \
 diff --git a/math.h b/math.h
-index 3b08527..c44e17d 100644
+index 3b08527..217bab9 100644
 --- a/math.h
 +++ b/math.h
 @@ -66,236 +66,520 @@ typedef __float_t float_t;
@@ -1834,7 +1832,7 @@ index 3b08527..c44e17d 100644
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  long double fabsl(long double __x) __attribute_const__;
 +#else
-+__static_inline__ long double fabsl(long double __x) __attribute_const__ { return __builtin_fabsl(__x); }
++__attribute_const__ __static_inline__ long double fabsl(long double __x) { return __builtin_fabsl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double hypot(double __x, double __y);
@@ -2023,7 +2021,7 @@ index 3b08527..c44e17d 100644
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  long double copysignl(long double __value, long double __sign) __attribute_const__;
 +#else
-+__static_inline__ long double copysignl(long double __value, long double __sign) __attribute_const__ { return __builtin_copysignl(__value, __sign); }
++__attribute_const__ __static_inline__ long double copysignl(long double __value, long double __sign) { return __builtin_copysignl(__value, __sign); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nan(const char* _Nonnull __kind) __attribute_const__;
@@ -2032,7 +2030,7 @@ index 3b08527..c44e17d 100644
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  long double nanl(const char* _Nonnull __kind) __attribute_const__;
 +#else
-+__static_inline__ long double nanl(const char* _Nonnull __kind) __attribute_const__ { return __builtin_nanl(__kind); }
++__attribute_const__ __static_inline__ long double nanl(const char* _Nonnull __kind) { return __builtin_nanl(__kind); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nextafter(double __x, double __y);
@@ -2068,7 +2066,7 @@ index 3b08527..c44e17d 100644
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  long double fmaxl(long double __x, long double __y) __attribute_const__;
 +#else
-+__static_inline__ long double fmaxl(long double __x, long double __y) __attribute_const__ { return __builtin_fmaxl(__x, __y); }
++__attribute_const__ __static_inline__ long double fmaxl(long double __x, long double __y) { return __builtin_fmaxl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fmin(double __x, double __y) __attribute_const__;
@@ -2077,7 +2075,7 @@ index 3b08527..c44e17d 100644
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  long double fminl(long double __x, long double __y) __attribute_const__;
 +#else
-+__static_inline__ long double fminl(long double __x, long double __y) __attribute_const__ { return __builtin_fminl(__x, __y); }
++__attribute_const__ __static_inline__ long double fminl(long double __x, long double __y) { return __builtin_fminl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fma(double __x, double __y, double __z);
@@ -2760,18 +2758,16 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 59513fa..25501e9 100644
+index 59513fa..3e9b37c 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
-@@ -399,6 +399,4 @@
- #include <android/ndk-version.h>
+@@ -400,5 +400,4 @@
  #endif
  
--#define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
+ #define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
 -
 -#define __BIONIC_PREREQ(version)  (version >= __ANDROID_API__)
 +#define __static_inline__ static __inline
-\ No newline at end of file
 diff --git a/sys/endian.h b/sys/endian.h
 index 1c7448c..cb6cd38 100644
 --- a/sys/endian.h
