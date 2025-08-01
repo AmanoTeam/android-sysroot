@@ -218,12 +218,22 @@ for target in "${targets[@]}"; do
 			"${sysroot_directory}"
 		
 		cd "${sysroot_directory}/include"
-		rm --recursive *'-linux-android'*
+		# rm --recursive *'-linux-android'*
 		
-		cp \
+		for name in "${include_directory}/"*'-linux-android'*; do
+			base=$(basename ${name})
+			
+			if [ -d "./${base}" ]; then
+				continue
+			fi
+			
+			cp \
 			--recursive \
-			"${include_directory}/"*'-linux-android'* \
+			"${name}" \
 			'./'
+		done
+		
+		
 		
 		for name in *-linux-android*; do
 			if [ "${name}" != "${triplet}" ]; then
