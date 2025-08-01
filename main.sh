@@ -115,12 +115,7 @@ if ! [ -f "${ndk_archive}" ]; then
 	patch \
 		--directory="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" \
 		--strip='1' \
-		--input="${workdir}/patches/0001-I-have-no-clue-what-I-m-doing.patch"
-	
-	patch \
-		--directory="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" \
-		--strip='1' \
-		--input="${workdir}/patches/0001-a.patch"
+		--input="${workdir}/patches/0001-Android-NDK-r29-Beta-3.patch"
 	
 	curl \
 		--url 'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip' \
@@ -313,8 +308,6 @@ for target in "${targets[@]}"; do
 			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_dynamic.o"
 			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_so.o"
 			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_static.o"
-			
-			#patch --directory="${sysroot_directory}/include" --strip='1' --input="${workdir}/patches/0001-Header-fixes.patch"
 		fi
 		
 		rm "${sysroot_directory}/lib/lib"{compiler,stdc++,c++}* || true

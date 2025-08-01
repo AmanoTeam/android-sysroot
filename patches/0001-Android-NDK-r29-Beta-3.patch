@@ -1,25 +1,30 @@
-From 6e9005658200b4b550daeab2d265f4a0a2b261a7 Mon Sep 17 00:00:00 2001
+From 49a6a342c403b09875b5a61931cfb106c5c99119 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
-Date: Thu, 31 Jul 2025 21:24:54 -0300
-Subject: [PATCH] a
+Date: Fri, 1 Aug 2025 17:11:37 -0300
+Subject: [PATCH] Android NDK r29 Beta 3
 
 ---
+ SLES/OpenSLES_Platform.h           |   2 +-
  android/configuration.h            |   2 +
  android/dlext.h                    |   4 +-
- android/legacy_fenv_inlines_arm.h  | 156 ++++++++++++++++
+ android/legacy_fenv_inlines_arm.h  | 156 +++++++++++++++
  android/legacy_fenv_inlines_mips.h | 170 +++++++++++++++++
  android/legacy_signal_inlines.h    | 130 +++++++++++++
  android/legacy_sys_stat_inlines.h  |  48 +++++
  android/legacy_sys_wait_inlines.h  |  50 +++++
  android/set_abort_message.h        |   2 +-
- android/versioning.h               |   4 +
+ android/versioning.h               |  21 +--
  arpa/inet.h                        |  12 +-
+ bits/bionic_multibyte_result.h     |  17 ++
  bits/fenv_mips.h                   |  98 ++++++++++
  bits/glibc-syscalls.h              |   3 +
+ bits/ioctl.h                       |   3 +-
  bits/signal_types.h                |   2 +-
+ bits/stdatomic.h                   | 136 ++++++++++++-
  bits/stdlib_inlines.h              |  47 ++++-
  bits/wctype.h                      |   6 +-
- ctype.h                            |  36 ++--
+ complex.h                          |   6 +
+ ctype.h                            |  34 ++--
  dirent.h                           |  14 +-
  fcntl.h                            |  33 ++--
  fenv.h                             |  38 ++--
@@ -28,8 +33,8 @@ Subject: [PATCH] a
  inttypes.h                         |  16 +-
  link.h                             |   4 +-
  locale.h                           |  16 +-
- malloc.h                           |   4 +-
- math.h                             | 290 ++++++++++++++++++++++++++++-
+ malloc.h                           |   8 +-
+ math.h                             | 293 ++++++++++++++++++++++++++++-
  mntent.h                           |  13 +-
  poll.h                             |   4 +-
  pthread.h                          |  21 ++-
@@ -37,17 +42,18 @@ Subject: [PATCH] a
  search.h                           |  26 ++-
  setjmp.h                           |   8 +
  signal.h                           |  43 +++--
+ stdatomic.h                        |   8 +-
  stdio.h                            |  16 +-
  stdlib.h                           |  99 +++++++---
- string.h                           |  12 +-
+ string.h                           |  14 +-
  sys/auxv.h                         |   4 +-
  sys/cachectl.h                     |   3 +
- sys/cdefs.h                        |   5 +-
+ sys/cdefs.h                        |  67 +++++++
  sys/endian.h                       |  12 +-
  sys/epoll.h                        |   8 +-
  sys/fsuid.h                        |   6 +-
  sys/inotify.h                      |   6 +-
- sys/mman.h                         |  10 +-
+ sys/mman.h                         |  16 +-
  sys/personality.h                  |   4 +-
  sys/resource.h                     |  17 +-
  sys/sendfile.h                     |   6 +-
@@ -63,12 +69,12 @@ Subject: [PATCH] a
  sys/vfs.h                          |  46 ++++-
  sys/wait.h                         |   7 +-
  sys/xattr.h                        |  26 +--
- time.h                             |   4 +-
+ time.h                             |   6 +-
  uchar.h                            |  10 +-
  unistd.h                           |  58 ++++--
  wchar.h                            |  63 +++++--
  wctype.h                           |  38 ++--
- 64 files changed, 1746 insertions(+), 261 deletions(-)
+ 70 files changed, 1989 insertions(+), 284 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -76,6 +82,19 @@ Subject: [PATCH] a
  create mode 100644 android/legacy_sys_wait_inlines.h
  create mode 100644 bits/fenv_mips.h
 
+diff --git a/SLES/OpenSLES_Platform.h b/SLES/OpenSLES_Platform.h
+index 5dc3006..3f51c2d 100644
+--- a/SLES/OpenSLES_Platform.h
++++ b/SLES/OpenSLES_Platform.h
+@@ -55,7 +55,7 @@ typedef unsigned long long          sl_uint64_t;
+ #endif
+ 
+ #ifndef SL_API_DEPRECATED
+-#define SL_API_DEPRECATED(level) __attribute__((availability(android,deprecated=level)))
++#define SL_API_DEPRECATED(level) __attribute__((deprecated("since " #level)))
+ #endif
+ 
+ #endif /* _OPENSLES_PLATFORM_H_ */
 diff --git a/android/configuration.h b/android/configuration.h
 index 46c7dfe..707850f 100644
 --- a/android/configuration.h
@@ -713,12 +732,40 @@ index 6ad5678..dacea9c 100644
  
  __END_DECLS
 diff --git a/android/versioning.h b/android/versioning.h
-index a97d3a8..7e188bb 100644
+index 1cf6e51..7e188bb 100644
 --- a/android/versioning.h
 +++ b/android/versioning.h
-@@ -75,3 +75,7 @@
+@@ -58,15 +58,10 @@
+ #define __BIONIC_AVAILABILITY_GUARD(api_level) (__ANDROID_MIN_SDK_VERSION__ >= (api_level))
+ #endif
+ 
+-#pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wc23-extensions"
+-// Passing no argument for the '...' parameter of a variadic macro is a C23 extension
+-#define __INTRODUCED_IN(api_level) __BIONIC_AVAILABILITY(introduced=api_level)
+-#pragma clang diagnostic pop
+-
+-#define __DEPRECATED_IN(api_level, msg) __BIONIC_AVAILABILITY(deprecated=api_level, message=msg)
+-#define __REMOVED_IN(api_level, msg) __BIONIC_AVAILABILITY(obsoleted=api_level, message=msg)
+-
++#define __INTRODUCED_IN(api_level) __attribute__((annotate("introduced_in=" #api_level)))
++#define __DEPRECATED_IN(api_level, msg) __attribute__((deprecated("since " #api_level ". " msg)))
++#define __REMOVED_IN(api_level, msg) __DEPRECATED_IN(api_level, msg)
++ 
+ // The same availability attribute can't be annotated multiple times. Therefore, the macros are
+ // defined for the configuration that it is valid for so that declarations like the below doesn't
+ // cause inconsistent availability values which is an error with -Wavailability:
+@@ -74,9 +69,13 @@
+ // void foo() __INTRODUCED_IN_32(30) __INTRODUCED_IN_64(31);
+ //
+ #if !defined(__LP64__)
+-#define __INTRODUCED_IN_32(api_level) __BIONIC_AVAILABILITY(introduced=api_level)
++#define __INTRODUCED_IN_32(api_level) __attribute__((annotate("introduced_in_32=" #api_level)))
+ #define __INTRODUCED_IN_64(api_level)
+ #else
  #define __INTRODUCED_IN_32(api_level)
- #define __INTRODUCED_IN_64(api_level) __attribute__((annotate("introduced_in_64=" #api_level)))
+-#define __INTRODUCED_IN_64(api_level) __BIONIC_AVAILABILITY(introduced=api_level)
++#define __INTRODUCED_IN_64(api_level) __attribute__((annotate("introduced_in_64=" #api_level)))
  #endif
 +
 +#define __INTRODUCED_IN_ARM(api_level) __attribute__((annotate("introduced_in_arm=" #api_level)))
@@ -747,6 +794,40 @@ index ce9dd93..cd1fce5 100644
  char* _Nonnull inet_ntoa(struct in_addr __addr);
  const char* _Nullable inet_ntop(int __af, const void* _Nonnull __src, char* _Nonnull __dst, socklen_t __size);
  unsigned int inet_nsap_addr(const char* _Nonnull __ascii, unsigned char* _Nonnull __binary, int __n);
+diff --git a/bits/bionic_multibyte_result.h b/bits/bionic_multibyte_result.h
+index 930e67c..c49254a 100644
+--- a/bits/bionic_multibyte_result.h
++++ b/bits/bionic_multibyte_result.h
+@@ -46,6 +46,7 @@ __BEGIN_DECLS
+  * Refer to C23 7.30.1 Restartable multibyte/wide character conversion functions
+  * for more details.
+  */
++#ifdef __clang__
+ enum : size_t {
+   /// @brief An encoding error occurred. The bytes read are not a valid unicode
+   /// character, nor are they a partially valid character.
+@@ -65,5 +66,21 @@ enum : size_t {
+   BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED = -3UL,
+ #define BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED
+ };
++#else
++/// @brief An encoding error occurred. The bytes read are not a valid unicode
++/// character, nor are they a partially valid character.
++#define BIONIC_MULTIBYTE_RESULT_ILLEGAL_SEQUENCE (size_t(-1UL))
++
++/// @brief The bytes read may produce a valid unicode character, but the
++/// sequence is incomplete. Future calls may complete the character.
++#define BIONIC_MULTIBYTE_RESULT_INCOMPLETE_SEQUENCE (size_t(-2UL))
++
++/// @brief The output of the call was the result of a previous successful
++/// decoding. No new bytes were consumed.
++///
++/// The common case for this return value is when mbrtoc16 returns the low
++/// surrogate of a pair.
++#define BIONIC_MULTIBYTE_RESULT_NO_BYTES_CONSUMED (size_t(-3UL))
++#endif
+ 
+ __END_DECLS
 diff --git a/bits/fenv_mips.h b/bits/fenv_mips.h
 new file mode 100644
 index 0000000..9298e86
@@ -865,6 +946,20 @@ index 8c5a91d..1fdb35a 100644
  #if defined(__NR_tgkill)
    #define SYS_tgkill __NR_tgkill
  #endif
+diff --git a/bits/ioctl.h b/bits/ioctl.h
+index ae75880..ad328b0 100644
+--- a/bits/ioctl.h
++++ b/bits/ioctl.h
+@@ -55,7 +55,8 @@ int ioctl(int __fd, int __op, ...);
+  * - defining BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD, which will make the
+  *   overloading go away.
+  */
+-#if !defined(BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD)
++#if defined(__clang__) && __has_extension(overloadable_unmarked) && \
++  !defined(BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD)
+ /* enable_if(1) just exists to break overloading ties. */
+ int ioctl(int __fd, unsigned __op, ...) __overloadable __enable_if(1, "") __RENAME(ioctl);
+ #endif
 diff --git a/bits/signal_types.h b/bits/signal_types.h
 index 41a697e..1223d8a 100644
 --- a/bits/signal_types.h
@@ -878,6 +973,211 @@ index 41a697e..1223d8a 100644
  
  #define __SIGACTION_BODY \
    int sa_flags; \
+diff --git a/bits/stdatomic.h b/bits/stdatomic.h
+index ebdc9e5..6fa9d3f 100644
+--- a/bits/stdatomic.h
++++ b/bits/stdatomic.h
+@@ -49,6 +49,20 @@
+ # include <uchar.h>  /* For char16_t and char32_t.              */
+ #endif
+ 
++
++#ifdef __clang__
++# if __has_extension(c_atomic) || __has_extension(cxx_atomic)
++#  define       __CLANG_ATOMICS
++# else
++#  error "stdatomic.h does not support your compiler"
++# endif
++# if __has_builtin(__sync_swap)
++#  define __HAS_BUILTIN_SYNC_SWAP
++# endif
++#else
++# define __GNUC_ATOMICS
++#endif
++
+ /*
+  * 7.17.1 Atomic lock-free macros.
+  */
+@@ -88,8 +102,13 @@
+  * 7.17.2 Initialization.
+  */
+ 
++#if defined(__CLANG_ATOMICS)
+ #define	ATOMIC_VAR_INIT(value)		(value)
+ #define	atomic_init(obj, value)		__c11_atomic_init(obj, value)
++#else
++#define	ATOMIC_VAR_INIT(value)		{ .__val = (value) }
++#define	atomic_init(obj, value)		((void)((obj)->__val = (value)))
++#endif
+ 
+ /*
+  * Clang and recent GCC both provide predefined macros for the memory
+@@ -141,23 +160,56 @@ typedef enum {
+  */
+ 
+ static __inline void atomic_thread_fence(memory_order __order __attribute__((__unused__))) {
++#ifdef __CLANG_ATOMICS
+ 	__c11_atomic_thread_fence(__order);
++#elif defined(__GNUC_ATOMICS)
++	__atomic_thread_fence(__order);
++#else
++	__sync_synchronize();
++#endif
+ }
+ 
+ static __inline void atomic_signal_fence(memory_order __order __attribute__((__unused__))) {
++#ifdef __CLANG_ATOMICS
+ 	__c11_atomic_signal_fence(__order);
++#elif defined(__GNUC_ATOMICS)
++	__atomic_signal_fence(__order);
++#else
++	__asm volatile ("" ::: "memory");
++#endif
+ }
+ 
+ /*
+  * 7.17.5 Lock-free property.
+  */
+ 
+-#define	atomic_is_lock_free(obj) __c11_atomic_is_lock_free(sizeof(*(obj)))
++#if defined(_KERNEL)
++/* Atomics in kernelspace are always lock-free. */
++#define	atomic_is_lock_free(obj) \
++	((void)(obj), (_Bool)1)
++#elif defined(__CLANG_ATOMICS)
++#define	atomic_is_lock_free(obj) \
++	__c11_atomic_is_lock_free(sizeof(*(obj)))
++#elif defined(__GNUC_ATOMICS)
++#define	atomic_is_lock_free(obj) \
++	__atomic_is_lock_free(sizeof((obj)->__val), &(obj)->__val)
++#else
++#define	atomic_is_lock_free(obj) \
++	((void)(obj), sizeof((obj)->__val) <= sizeof(void *))
++#endif
+ 
+ /*
+  * 7.17.6 Atomic integer types.
+  */
+ 
++#ifndef __CLANG_ATOMICS
++/*
++ * No native support for _Atomic(). Place object in structure to prevent
++ * most forms of direct non-atomic access.
++ */
++#define _Atomic(T)              struct { T volatile __val; }
++#endif
++
+ typedef _Atomic(bool)			atomic_bool;
+ typedef _Atomic(char)			atomic_char;
+ typedef _Atomic(signed char)		atomic_schar;
+@@ -206,6 +258,7 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
+  * Compiler-specific operations.
+  */
+ 
++#if defined(__CLANG_ATOMICS)
+ #define	atomic_compare_exchange_strong_explicit(object, expected,	\
+     desired, success, failure)						\
+ 	__c11_atomic_compare_exchange_strong(object, expected, desired,	\
+@@ -230,11 +283,91 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
+ 	__c11_atomic_load(object, order)
+ #define	atomic_store_explicit(object, desired, order)			\
+ 	__c11_atomic_store(object, desired, order)
++#elif defined(__GNUC_ATOMICS)
++#define	atomic_compare_exchange_strong_explicit(object, expected,	\
++    desired, success, failure)						\
++	__atomic_compare_exchange_n(&(object)->__val, expected,		\
++	    desired, 0, success, failure)
++#define	atomic_compare_exchange_weak_explicit(object, expected,		\
++    desired, success, failure)						\
++	__atomic_compare_exchange_n(&(object)->__val, expected,		\
++	    desired, 1, success, failure)
++#define	atomic_exchange_explicit(object, desired, order)		\
++	__atomic_exchange_n(&(object)->__val, desired, order)
++#define	atomic_fetch_add_explicit(object, operand, order)		\
++	__atomic_fetch_add(&(object)->__val, operand, order)
++#define	atomic_fetch_and_explicit(object, operand, order)		\
++	__atomic_fetch_and(&(object)->__val, operand, order)
++#define	atomic_fetch_or_explicit(object, operand, order)		\
++	__atomic_fetch_or(&(object)->__val, operand, order)
++#define	atomic_fetch_sub_explicit(object, operand, order)		\
++	__atomic_fetch_sub(&(object)->__val, operand, order)
++#define	atomic_fetch_xor_explicit(object, operand, order)		\
++	__atomic_fetch_xor(&(object)->__val, operand, order)
++#define	atomic_load_explicit(object, order)				\
++	__atomic_load_n(&(object)->__val, order)
++#define	atomic_store_explicit(object, desired, order)			\
++	__atomic_store_n(&(object)->__val, desired, order)
++#else
++#define	__atomic_apply_stride(object, operand) \
++	(((__typeof__((object)->__val))0) + (operand))
++#define	atomic_compare_exchange_strong_explicit(object, expected,	\
++    desired, success, failure)	__extension__ ({			\
++	__typeof__(expected) __ep = (expected);				\
++	__typeof__(*__ep) __e = *__ep;					\
++	(void)(success); (void)(failure);				\
++	(bool)((*__ep = __sync_val_compare_and_swap(&(object)->__val,	\
++	    __e, desired)) == __e);					\
++})
++#define	atomic_compare_exchange_weak_explicit(object, expected,		\
++    desired, success, failure)						\
++	atomic_compare_exchange_strong_explicit(object, expected,	\
++		desired, success, failure)
++#ifdef __HAS_BUILTIN_SYNC_SWAP
++/* Clang provides a full-barrier atomic exchange - use it if available. */
++#define	atomic_exchange_explicit(object, desired, order)		\
++	((void)(order), __sync_swap(&(object)->__val, desired))
++#else
++/*
++ * __sync_lock_test_and_set() is only an acquire barrier in theory (although in
++ * practice it is usually a full barrier) so we need an explicit barrier before
++ * it.
++ */
++#define	atomic_exchange_explicit(object, desired, order)		\
++__extension__ ({							\
++	__typeof__(object) __o = (object);				\
++	__typeof__(desired) __d = (desired);				\
++	(void)(order);							\
++	__sync_synchronize();						\
++	__sync_lock_test_and_set(&(__o)->__val, __d);			\
++})
++#endif
++#define	atomic_fetch_add_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_add(&(object)->__val,		\
++	    __atomic_apply_stride(object, operand)))
++#define	atomic_fetch_and_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_and(&(object)->__val, operand))
++#define	atomic_fetch_or_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_or(&(object)->__val, operand))
++#define	atomic_fetch_sub_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_sub(&(object)->__val,		\
++	    __atomic_apply_stride(object, operand)))
++#define	atomic_fetch_xor_explicit(object, operand, order)		\
++	((void)(order), __sync_fetch_and_xor(&(object)->__val, operand))
++#define	atomic_load_explicit(object, order)				\
++	((void)(order), __sync_fetch_and_add(&(object)->__val, 0))
++#define	atomic_store_explicit(object, desired, order)			\
++	((void)atomic_exchange_explicit(object, desired, order))
++#endif
+ 
+ /*
+  * Convenience functions.
++ *
++ * Don't provide these in kernel space. In kernel space, we should be
++ * disciplined enough to always provide explicit barriers.
+  */
+ 
++#ifndef _KERNEL
+ #define	atomic_compare_exchange_strong(object, expected, desired)	\
+ 	atomic_compare_exchange_strong_explicit(object, expected,	\
+ 	    desired, memory_order_seq_cst, memory_order_seq_cst)
+@@ -257,6 +390,7 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
+ 	atomic_load_explicit(object, memory_order_seq_cst)
+ #define	atomic_store(object, desired)					\
+ 	atomic_store_explicit(object, desired, memory_order_seq_cst)
++#endif /* !_KERNEL */
+ 
+ /*
+  * 7.17.8 Atomic flag type and operations.
 diff --git a/bits/stdlib_inlines.h b/bits/stdlib_inlines.h
 index fffca19..42ae7db 100644
 --- a/bits/stdlib_inlines.h
@@ -962,17 +1262,40 @@ index d0cffec..0481af1 100644
  int iswcntrl(wint_t __wc);
  int iswdigit(wint_t __wc);
  int iswgraph(wint_t __wc);
+diff --git a/complex.h b/complex.h
+index 1115862..7415d74 100644
+--- a/complex.h
++++ b/complex.h
+@@ -44,9 +44,15 @@ _Static_assert(__generic(_Complex_I, float _Complex, 1, 0),
+ #define	I		_Complex_I
+ 
+ #if __STDC_VERSION__ >= 201112L
++#ifdef __clang__
+ #define	CMPLX(x, y)	((double complex){ x, y })
+ #define	CMPLXF(x, y)	((float complex){ x, y })
+ #define	CMPLXL(x, y)	((long double complex){ x, y })
++#else
++#define	CMPLX(x, y)	__builtin_complex((double)(x), (double)(y))
++#define	CMPLXF(x, y)	__builtin_complex((float)(x), (float)(y))
++#define	CMPLXL(x, y)	__builtin_complex((long double)(x), (long double)(y))
++#endif
+ #endif
+ 
+ __BEGIN_DECLS
 diff --git a/ctype.h b/ctype.h
-index dc3f673..777e6cc 100644
+index dc3f673..09d943d 100644
 --- a/ctype.h
 +++ b/ctype.h
-@@ -73,12 +73,13 @@ __BEGIN_DECLS
- /** Internal implementation detail. Do not use. */
- extern const char* _ctype_;
+@@ -42,7 +42,7 @@
+  * also provide actual symbols for any caller that needs them.
+  */
+ #if !defined(__BIONIC_CTYPE_INLINE)
+-#define __BIONIC_CTYPE_INLINE static __inline
++#define __BIONIC_CTYPE_INLINE __static_inline__
+ #endif
  
-+#if __BIONIC_AVAILABILITY_GUARD(21)
- /**
-  * Returns the corresponding lower-case character if `ch` is upper-case, or undefined otherwise.
+ /** Internal implementation detail. Do not use. */
+@@ -78,7 +78,7 @@ extern const char* _ctype_;
   *
   * Prefer tolower() instead.
   */
@@ -981,7 +1304,7 @@ index dc3f673..777e6cc 100644
    return __ch | 0x20;
  }
  
-@@ -87,11 +88,12 @@ __BIONIC_CTYPE_INLINE int _tolower(int __ch) {
+@@ -87,7 +87,7 @@ __BIONIC_CTYPE_INLINE int _tolower(int __ch) {
   *
   * Prefer toupper() instead.
   */
@@ -990,16 +1313,9 @@ index dc3f673..777e6cc 100644
    // Using EOR rather than AND makes no difference on arm, but saves an
    // instruction on arm64.
    return __ch ^ 0x20;
- }
-+#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
- 
- /** Internal implementation detail. Do not use. */
- __attribute__((__no_sanitize__("unsigned-integer-overflow")))
-@@ -179,74 +181,76 @@ __BIONIC_CTYPE_INLINE int toascii(int __ch) {
-   return __ch & 0x7f;
+@@ -180,72 +180,72 @@ __BIONIC_CTYPE_INLINE int toascii(int __ch) {
  }
  
-+#if __BIONIC_AVAILABILITY_GUARD(21)
  /** Like isalnum() but with an ignored `locale_t`. */
 -__BIONIC_CTYPE_INLINE int isalnum_l(int __ch, locale_t __l) {
 +__BIONIC_CTYPE_INLINE int isalnum_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
@@ -1083,9 +1399,7 @@ index dc3f673..777e6cc 100644
 +__BIONIC_CTYPE_INLINE int toupper_l(int __ch, locale_t __l) __INTRODUCED_IN(21) {
    return toupper(__ch);
  }
-+#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
- __END_DECLS
 diff --git a/dirent.h b/dirent.h
 index af22fb3..5300dd5 100644
 --- a/dirent.h
@@ -1549,10 +1863,22 @@ index f5c79cb..c12408a 100644
  #define LC_GLOBAL_LOCALE __BIONIC_CAST(reinterpret_cast, locale_t, -1L)
  
 diff --git a/malloc.h b/malloc.h
-index 4de6f35..1f2e33a 100644
+index ba68401..1f2e33a 100644
 --- a/malloc.h
 +++ b/malloc.h
-@@ -122,11 +122,13 @@ void free(void* _Nullable __ptr);
+@@ -31,7 +31,11 @@
+ 
+ __BEGIN_DECLS
+ 
++#if defined(__clang__) && !__has_attribute(alloc_size)
+ #define __BIONIC_ALLOC_SIZE(...) __attribute__((__alloc_size__(__VA_ARGS__)))
++#else
++#define __BIONIC_ALLOC_SIZE(...)
++#endif
+ 
+ /**
+  * [malloc(3)](https://man7.org/linux/man-pages/man3/malloc.3.html) allocates
+@@ -118,11 +122,13 @@ void free(void* _Nullable __ptr);
   */
  __nodiscard void* _Nullable memalign(size_t __alignment, size_t __byte_count) __mallocfunc __BIONIC_ALLOC_SIZE(2);
  
@@ -1568,18 +1894,24 @@ index 4de6f35..1f2e33a 100644
  #define __MALLINFO_BODY \
    /** Total number of non-mmapped bytes currently allocated from OS. */ \
 diff --git a/math.h b/math.h
-index 3b08527..217bab9 100644
+index 59161bf..217bab9 100644
 --- a/math.h
 +++ b/math.h
-@@ -66,236 +66,520 @@ typedef __float_t float_t;
+@@ -62,241 +62,524 @@ typedef __float_t float_t;
+ 
+ #define isfinite(x) __builtin_isfinite(x)
+ 
+-#define isinf(x) __builtin_isinf(x)
+-
+-#define isnan(x) __builtin_isnan(x)
+-
+ #define isnormal(x) __builtin_isnormal(x)
  
  #define signbit(x) __builtin_signbit(x)
  
--__extern_inline__ int isinf(double __x) { return __builtin_isinf(__x); }
--__extern_inline__ int isnan(double __x) { return __builtin_isnan(__x); }
 +__static_inline__ int isinf(double __x) { return __builtin_isinf(__x); }
 +__static_inline__ int isnan(double __x) { return __builtin_isnan(__x); }
- 
++
  double acos(double __x);
  float acosf(float __x);
 +
@@ -2453,6 +2785,25 @@ index 38dcbde..1c6665b 100644
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
 +
  #endif
+diff --git a/stdatomic.h b/stdatomic.h
+index b7dac4a..d6b0f38 100644
+--- a/stdatomic.h
++++ b/stdatomic.h
+@@ -32,8 +32,12 @@
+ 
+ #include <sys/cdefs.h>
+ 
+-#if defined(__cplusplus) && __cplusplus >= 201103L && __has_include(<atomic>)
+-# if __has_feature(cxx_atomic)
++#if defined(__cplusplus) && __cplusplus >= 201103L && defined(_USING_LIBCXX)
++# ifdef __clang__
++#  if __has_feature(cxx_atomic)
++#   define _STDATOMIC_HAVE_ATOMIC
++#  endif
++# else /* gcc */
+ #  define _STDATOMIC_HAVE_ATOMIC
+ # endif
+ #endif
 diff --git a/stdio.h b/stdio.h
 index 2c2dc01..eb3ec37 100644
 --- a/stdio.h
@@ -2699,7 +3050,7 @@ index 7081d7c..65dceef 100644
  __END_DECLS
  
 diff --git a/string.h b/string.h
-index 8a6e8cd..fd54a79 100644
+index a0a7cc4..fd54a79 100644
 --- a/string.h
 +++ b/string.h
 @@ -194,7 +194,11 @@ size_t strnlen(const char* _Nonnull __s, size_t __n) __attribute_pure__;
@@ -2728,6 +3079,15 @@ index 8a6e8cd..fd54a79 100644
  
  #if defined(__USE_GNU) && !defined(basename)
  /*
+@@ -239,7 +245,7 @@ char* _Nonnull basename(const char* _Nonnull __path) __RENAME(__gnu_basename) __
+ #endif
+ 
+ /* Const-correct overloads. Placed after FORTIFY so we call those functions, if possible. */
+-#if defined(__cplusplus)
++#if defined(__cplusplus) && defined(__clang__)
+ /* libcxx tries to provide these. Suppress that, since libcxx's impl doesn't respect FORTIFY. */
+ #define __CORRECT_ISO_CPP_STRING_H_PROTO
+ /* Used to make these preferable over regular <string.h> signatures for overload resolution. */
 diff --git a/sys/auxv.h b/sys/auxv.h
 index 732f944..5aab5c3 100644
 --- a/sys/auxv.h
@@ -2764,16 +3124,132 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 59513fa..e5d029b 100644
+index 9bd35bb..e5d029b 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
-@@ -400,5 +400,8 @@
+@@ -42,6 +42,29 @@
+  */
+ #define __BIONIC__ 1
+ 
++#ifndef __has_extension
++#define __has_extension         __has_feature
++#endif
++#ifndef __has_feature
++#define __has_feature(x)        0
++#endif
++#ifndef __has_include
++#define __has_include(x)        0
++#endif
++#ifndef __has_builtin
++#define __has_builtin(x)        0
++#endif
++#ifndef __has_attribute
++#define __has_attribute(x)      0
++#endif
++
++#if !defined(__clang__)
++// TODO: Replace all the functions use _Nonnull with __nonnull__
++#define _Nonnull
++#define _Nullable
++#define _Null_unspecified
++#endif
++
+ #if defined(__cplusplus)
+ #define __BEGIN_DECLS extern "C" {
+ #define __END_DECLS }
+@@ -143,12 +166,25 @@
+ #define __nodiscard __attribute__((__warn_unused_result__))
+ #define __wur __nodiscard
+ 
++#ifdef __clang__
+ #define __errorattr(msg) __attribute__((__unavailable__(msg)))
+ #define __warnattr(msg) __attribute__((__deprecated__(msg)))
+ #define __warnattr_real(msg) __attribute__((__deprecated__(msg)))
+ #define __enable_if(cond, msg) __attribute__((__enable_if__(cond, msg)))
+ #define __clang_error_if(cond, msg) __attribute__((__diagnose_if__(cond, msg, "error")))
+ #define __clang_warning_if(cond, msg) __attribute__((__diagnose_if__(cond, msg, "warning")))
++#else
++#  define __errorattr(msg) __attribute__((__error__(msg)))
++#  define __warnattr(msg) __attribute__((__warning__(msg)))
++#  define __warnattr_real __warnattr
++/* enable_if doesn't exist on other compilers; give an error if it's used. */
++/* diagnose_if doesn't exist either, but it's often tagged on non-clang-specific functions */
++#  define __clang_error_if(cond, msg)
++#  define __clang_warning_if(cond, msg)
++
++/* errordecls really don't work as well in clang as they do in GCC. */
++#  define __errordecl(name, msg) extern void name(void) __errorattr(msg)
++#endif
+ 
+ #if defined(ANDROID_STRICT)
+ /*
+@@ -252,6 +288,7 @@
+ 
+ #if defined(__BIONIC_FORTIFY)
+ #  define __bos0(s) __bosn((s), 0)
++#if defined(__clang__)
+ #  define __pass_object_size_n(n) __attribute__((__pass_object_size__(n)))
+ /*
+  * FORTIFY'ed functions all have either enable_if or pass_object_size, which
+@@ -276,6 +313,18 @@
+ /* Error functions don't have bodies, so they can just be static. */
+ #  define __BIONIC_ERROR_FUNCTION_VISIBILITY static __unused
+ #else
++/*
++ * Where they can, GCC and clang-style FORTIFY share implementations.
++ * So, make these nops in GCC.
++ */
++#  define __pass_object_size_n(n)
++#  define __call_bypassing_fortify(fn) (fn)
++/* __BIONIC_FORTIFY_NONSTATIC_INLINE is pointless in GCC's FORTIFY */
++#  define __BIONIC_FORTIFY_INLINE extern __inline__ __always_inline __attribute__((gnu_inline)) __attribute__((__artificial__))
++/* __always_inline is probably okay and ignored by gcc in __BIONIC_FORTIFY_VARIADIC */
++#  define __BIONIC_FORTIFY_VARIADIC __BIONIC_FORTIFY_INLINE
++#endif
++#else
+ /* Further increase sharing for some inline functions */
+ #  define __pass_object_size_n(n)
+ #endif
+@@ -304,7 +353,16 @@
+ #  define __BIONIC_INCLUDE_FORTIFY_HEADERS 1
  #endif
  
- #define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
-+#define __static_inline__ static __inline
++#if !defined(__clang__) && defined(__BIONIC_INCLUDE_FORTIFY_HEADERS)
++#undef __BIONIC_INCLUDE_FORTIFY_HEADERS
++/* #warning "Fortify headers are not supported and will not used without clang." */
++#endif
++
++#if defined(__clang__)
+ #define __overloadable __attribute__((__overloadable__))
++#else
++#define __overloadable
++#endif
  
--#define __BIONIC_PREREQ(version)  (version >= __ANDROID_API__)
+ #define __diagnose_as_builtin(...) __attribute__((__diagnose_as_builtin__(__VA_ARGS__)))
+ 
+@@ -324,6 +382,7 @@
+ /* Used to rename functions so that the compiler emits a call to 'x' rather than the function this was applied to. */
+ #define __RENAME(x) __asm__(#x)
+ 
++#if defined(__clang__)
+ /*
+  * Used when we need to check for overflow when multiplying x and y. This
+  * should only be used where __builtin_umull_overflow can not work, because it makes
+@@ -332,9 +391,17 @@
+  * __builtin_umull_overflow.
+  */
+ #define __unsafe_check_mul_overflow(x, y) ((__SIZE_TYPE__)-1 / (x) < (y))
++#endif
+ 
+ #include <android/versioning.h>
+ #include <android/api-level.h>
+ #if __has_include(<android/ndk-version.h>)
+ #include <android/ndk-version.h>
+ #endif
++
++#define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
++#define __static_inline__ static __inline
++
 +#if !__BIONIC_AVAILABILITY_GUARD(__ANDROID_API_G__)
 +	#define __INTRODUCED_IN_API_G__ __attribute__((__error__("This symbol is only available in Android 2.3.0 (API level " ___STRING(ANDROID_API_G) ") or higher.")));
 +#endif
@@ -2884,12 +3360,21 @@ index 75ed542..0358e65 100644
  int inotify_rm_watch(int __fd, uint32_t __watch_descriptor);
  
 diff --git a/sys/mman.h b/sys/mman.h
-index 596145e..9ca9663 100644
+index 3fe1f9c..9ca9663 100644
 --- a/sys/mman.h
 +++ b/sys/mman.h
-@@ -55,12 +55,14 @@ void* _Nonnull mmap(void* _Nullable __addr, size_t __size, int __prot, int __fla
+@@ -49,18 +49,20 @@ __BEGIN_DECLS
+  * Returns the address of the mapping on success,
+  * and returns `MAP_FAILED` and sets `errno` on failure.
+  */
++void* _Nonnull mmap(void* _Nullable __addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset)
+ #if defined(__USE_FILE_OFFSET64)
+-void* _Nonnull mmap(void* _Nullable __addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset) __RENAME(mmap64);
+-#else
+-void* _Nonnull mmap(void* _Nullable __addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset);
++	__RENAME(mmap64)
  #endif
- ;
++;
  
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  /**
@@ -3701,9 +4186,18 @@ index ebe4eb8..e532fcd 100644
  
  __END_DECLS
 diff --git a/time.h b/time.h
-index 3e94842..db713b9 100644
+index 777e648..db713b9 100644
 --- a/time.h
 +++ b/time.h
+@@ -253,7 +253,7 @@ char* _Nullable strptime(const char* _Nonnull __s, const char* _Nonnull __fmt, s
+ /**
+  * Equivalent to strptime() on Android where only C/POSIX locales are available.
+  */
+-char* _Nullable strptime_l(const char* _Nonnull __s, const char* _Nonnull __fmt, struct tm* _Nonnull __tm, locale_t _Nonnull __l) __strftimelike(2) __RENAME(strptime);
++char* _Nullable strptime_l(const char* _Nonnull __s, const char* _Nonnull __fmt, struct tm* _Nonnull __tm, locale_t _Nonnull __l) __RENAME(strptime) __strftimelike(2);
+ 
+ /**
+  * [strftime(3)](https://man7.org/linux/man-pages/man3/strftime.3.html) formats
 @@ -263,10 +263,12 @@ char* _Nullable strptime_l(const char* _Nonnull __s, const char* _Nonnull __fmt,
   */
  size_t strftime(char* _Nonnull __buf, size_t __n, const char* _Nonnull __fmt, const struct tm* _Nullable __tm) __strftimelike(3);
