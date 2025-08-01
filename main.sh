@@ -112,6 +112,11 @@ if ! [ -f "${ndk_archive}" ]; then
 		--strip='1' \
 		--input="${workdir}/patches/0001-I-have-no-clue-what-I-m-doing.patch"
 	
+	patch \
+		--directory="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" \
+		--strip='1' \
+		--input="${workdir}/patches/0001-a.patch"
+	
 	curl \
 		--url 'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip' \
 		--retry '30' \
@@ -156,6 +161,7 @@ if ! [ -f "${binutils_tarball}" ]; then
 fi
 
 for target in "${targets[@]}"; do
+	continue
 	[ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
 	
 	cd "${binutils_directory}/build"
@@ -173,6 +179,9 @@ for target in "${targets[@]}"; do
 	make all --jobs
 	make install
 done
+
+declare -r include_directory_new="${unsupported_ndk_directory}/sysroot/usr/include"
+declare -r include_directory_old="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
 
 for target in "${targets[@]}"; do
 	declare arch="$(get_arch ${target})"
@@ -206,10 +215,16 @@ for target in "${targets[@]}"; do
 		
 		cp \
 			--recursive \
-			"${include_directory}" \
+			"${include_directory_new}" \
 			"${sysroot_directory}"
 		
 		cd "${sysroot_directory}/include"
+		rm --recursive *'-linux-android'*
+		
+		cp \
+			--recursive \
+			"${include_directory}/"*'-linux-android'* \
+			'./'
 		
 		for name in *-linux-android*; do
 			if [ "${name}" != "${triplet}" ]; then
@@ -248,7 +263,7 @@ for target in "${targets[@]}"; do
 			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_so.o"
 			remove_symbols "${target}" "${sysroot_directory}/lib/crtbegin_static.o"
 			
-			patch --directory="${sysroot_directory}/include" --strip='1' --input="${workdir}/patches/0001-Header-fixes.patch"
+			#patch --directory="${sysroot_directory}/include" --strip='1' --input="${workdir}/patches/0001-Header-fixes.patch"
 		fi
 		
 		rm "${sysroot_directory}/lib/lib"{compiler,stdc++,c++}* || true
