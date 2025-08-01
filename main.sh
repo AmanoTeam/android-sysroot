@@ -218,7 +218,12 @@ for target in "${targets[@]}"; do
 			"${sysroot_directory}"
 		
 		cd "${sysroot_directory}/include"
-		# rm --recursive *'-linux-android'*
+		rm --recursive 'asm-generic'
+		
+		cp \
+			--recursive \
+			"${include_directory}/asm-generic" \
+			.
 		
 		for name in "${include_directory}/"*'-linux-android'*; do
 			base=$(basename ${name})
