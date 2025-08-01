@@ -1,4 +1,4 @@
-From 6a3f3700802fcdb18b63303b6fb778758b5d6681 Mon Sep 17 00:00:00 2001
+From fdd1ae50437c8c7e4447c41c82456f66f29a3482 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -44,7 +44,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  signal.h                           |  43 +++--
  stdatomic.h                        |   8 +-
  stdio.h                            |  16 +-
- stdlib.h                           |  99 +++++++---
+ stdlib.h                           | 107 ++++++++---
  string.h                           |  14 +-
  sys/auxv.h                         |   4 +-
  sys/cachectl.h                     |   3 +
@@ -74,7 +74,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                           |  58 ++++--
  wchar.h                            |  63 +++++--
  wctype.h                           |  38 ++--
- 70 files changed, 1973 insertions(+), 268 deletions(-)
+ 70 files changed, 1981 insertions(+), 268 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -2734,7 +2734,7 @@ index 2c2dc01..eb3ec37 100644
  #if (defined(__STDC_VERSION__) && __STDC_VERSION__ < 201112L) || \
      (defined(__cplusplus) && __cplusplus <= 201103L)
 diff --git a/stdlib.h b/stdlib.h
-index 7081d7c..65dceef 100644
+index 7081d7c..1474ebd 100644
 --- a/stdlib.h
 +++ b/stdlib.h
 @@ -44,12 +44,19 @@ __BEGIN_DECLS
@@ -2827,7 +2827,7 @@ index 7081d7c..65dceef 100644
  void setprogname(const char* _Nonnull __name);
  
  
-@@ -222,27 +245,36 @@ int mblen(const char* _Nullable __s, size_t __n) __INTRODUCED_IN(26);
+@@ -222,27 +245,44 @@ int mblen(const char* _Nullable __s, size_t __n) __INTRODUCED_IN(26);
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
  
  size_t mbstowcs(wchar_t* _Nullable __dst, const char* _Nullable __src, size_t __n);
@@ -2844,9 +2844,17 @@ index 7081d7c..65dceef 100644
 -size_t __ctype_get_mb_cur_max(void);
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +size_t __ctype_get_mb_cur_max(void) __INTRODUCED_IN(21);
+ #define MB_CUR_MAX __ctype_get_mb_cur_max()
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
 +
- #define MB_CUR_MAX __ctype_get_mb_cur_max()
++#if !__BIONIC_AVAILABILITY_GUARD(21)
++/*
++ * Pre-L we didn't have any locale support and so we were always the POSIX
++ * locale. POSIX specifies that MB_CUR_MAX for the POSIX locale is 1:
++ * http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/stdlib.h.html
++ */
++#define MB_CUR_MAX 1
++#endif /* !__BIONIC_AVAILABILITY_GUARD(21) */
  
  #if defined(__BIONIC_INCLUDE_FORTIFY_HEADERS)
  #include <bits/fortify/stdlib.h>
@@ -2859,14 +2867,14 @@ index 7081d7c..65dceef 100644
 +int abs(int __x) __attribute_const__ __INTRODUCED_IN(21);
 +
 +long labs(long __x) __attribute_const__ __INTRODUCED_IN(21);
++
++long long llabs(long long __x) __attribute_const__ __INTRODUCED_IN(21);
  
 -int rand(void);
 -void srand(unsigned int __seed);
 -long random(void);
 -void srandom(unsigned int __seed);
 -int grantpt(int __fd);
-+long long llabs(long long __x) __attribute_const__ __INTRODUCED_IN(21);
-+
 +int rand(void) __INTRODUCED_IN(21);
 +void srand(unsigned int __seed) __INTRODUCED_IN(21);
 +long random(void) __INTRODUCED_IN(21);
@@ -2875,7 +2883,7 @@ index 7081d7c..65dceef 100644
  
  /**
   * [atof(3)](https://man7.org/linux/man-pages/man3/atof.3.html) converts a
-@@ -250,7 +282,8 @@ int grantpt(int __fd);
+@@ -250,7 +290,8 @@ int grantpt(int __fd);
   *
   * Returns the double; use strtof() or strtod() if you need to detect errors.
   */
@@ -2885,7 +2893,7 @@ index 7081d7c..65dceef 100644
  
  /**
   * [atoi(3)](https://man7.org/linux/man-pages/man3/atoi.3.html) converts a
-@@ -299,8 +332,10 @@ long strtol_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, i
+@@ -299,8 +340,10 @@ long strtol_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, i
   */
  long long strtoll(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base);
  
@@ -2897,7 +2905,7 @@ index 7081d7c..65dceef 100644
  
  /**
   * [strtoul(3)](https://man7.org/linux/man-pages/man3/strtoul.3.html) converts a
-@@ -325,9 +360,12 @@ unsigned long strtoul_l(const char* _Nonnull __s, char* _Nullable * _Nullable __
+@@ -325,9 +368,12 @@ unsigned long strtoul_l(const char* _Nonnull __s, char* _Nullable * _Nullable __
   */
  unsigned long long strtoull(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base);
  
@@ -2911,7 +2919,7 @@ index 7081d7c..65dceef 100644
  /**
   * [strtof(3)](https://man7.org/linux/man-pages/man3/strtof.3.html) converts a
   * string to a float.
-@@ -336,7 +374,8 @@ unsigned long long strtoull_l(const char* _Nonnull __s, char* _Nullable * _Nulla
+@@ -336,7 +382,8 @@ unsigned long long strtoull_l(const char* _Nonnull __s, char* _Nullable * _Nulla
   * `__end_ptr` is set to the last character in `__s` that was converted.
   * errno is set to ERANGE if the result overflowed or underflowed.
   */
@@ -2921,7 +2929,7 @@ index 7081d7c..65dceef 100644
  
  /**
   * [strtod(3)](https://man7.org/linux/man-pages/man3/strtod.3.html) converts a
-@@ -358,17 +397,17 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+@@ -358,17 +405,17 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
   */
  long double strtold(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
  
