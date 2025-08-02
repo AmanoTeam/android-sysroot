@@ -1,4 +1,4 @@
-From 67f5b1a6ef30b66545c551f0cc1afe2c950026a1 Mon Sep 17 00:00:00 2001
+From d5efef5842c9633c1c02998555d88c4579da2f57 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -80,10 +80,10 @@ Subject: [PATCH] Android NDK r29 Beta 3
  sys/xattr.h                         |  26 +--
  time.h                              |   6 +-
  uchar.h                             |  10 +-
- unistd.h                            |  58 ++++--
+ unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 79 files changed, 2101 insertions(+), 393 deletions(-)
+ 79 files changed, 2106 insertions(+), 393 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -4911,7 +4911,7 @@ index 94efb2d..b9fb3c8 100644
  
  __END_DECLS
 diff --git a/unistd.h b/unistd.h
-index 808568a..461fe7b 100644
+index 808568a..8c46bf8 100644
 --- a/unistd.h
 +++ b/unistd.h
 @@ -139,12 +139,20 @@ int    setpgid(pid_t __pid, pid_t __pgid);
@@ -5020,12 +5020,17 @@ index 808568a..461fe7b 100644
  /**
   * [getpagesize(2)](https://man7.org/linux/man-pages/man2/getpagesize.2.html)
   * returns the system's page size. This is slightly faster than going via
-@@ -399,13 +434,14 @@ int acct(const char* _Nullable __path);
+@@ -399,13 +434,19 @@ int acct(const char* _Nullable __path);
   *
   * Returns the system's page size in bytes.
   */
 -int getpagesize(void) __attribute_const__;
 +int getpagesize(void) __attribute_const__ __INTRODUCED_IN(21);
++#else
++__static_inline__ int getpagesize(void) {
++	long value = sysconf(_SC_PAGESIZE);
++	return (int) value;
++}
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long syscall(long __number, ...);
