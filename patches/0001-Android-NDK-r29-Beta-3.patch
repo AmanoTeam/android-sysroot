@@ -1,4 +1,4 @@
-From 2963498529e3158c4312064ed2cf02771c572e94 Mon Sep 17 00:00:00 2001
+From b5043b33fe47661ed2d6e05ddc09e074d71b6c38 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -3716,7 +3716,7 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 9bd35bb..5cf322f 100644
+index 9bd35bb..059efea 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
 @@ -42,6 +42,29 @@
@@ -3832,12 +3832,6 @@ index 9bd35bb..5cf322f 100644
   */
  #define __unsafe_check_mul_overflow(x, y) ((__SIZE_TYPE__)-1 / (x) < (y))
 +#endif
- 
- #include <android/versioning.h>
- #include <android/api-level.h>
- #if __has_include(<android/ndk-version.h>)
- #include <android/ndk-version.h>
- #endif
 +
 +#define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
 +
@@ -3851,11 +3845,16 @@ index 9bd35bb..5cf322f 100644
 +#else
 +	#define __static_inline__ static __inline
 +#endif
+ 
+ #include <android/versioning.h>
+ #include <android/api-level.h>
+ #if __has_include(<android/ndk-version.h>)
+ #include <android/ndk-version.h>
+ #endif
 +
 +#if !__BIONIC_AVAILABILITY_GUARD(__ANDROID_API_G__)
 +	#define __INTRODUCED_IN_API_G__ __attribute__((__error__("This symbol is only available in Android 2.3.0 (API level " ___STRING(ANDROID_API_G) ") or higher.")));
 +#endif
-\ No newline at end of file
 diff --git a/sys/endian.h b/sys/endian.h
 index 1c7448c..cb6cd38 100644
 --- a/sys/endian.h
