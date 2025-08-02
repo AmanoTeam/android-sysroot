@@ -1,4 +1,4 @@
-From 77796b31d341b7f82f9d28316202f673c7dbcd27 Mon Sep 17 00:00:00 2001
+From 41abd4374406b38e7f65ab1627353af502965a83 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -8,56 +8,56 @@ Subject: [PATCH] Android NDK r29 Beta 3
  android/api-level.h                 |   6 +-
  android/configuration.h             |   2 +
  android/dlext.h                     |   4 +-
- android/legacy_fenv_inlines_arm.h   | 156 +++++++++++++++
- android/legacy_fenv_inlines_mips.h  | 170 ++++++++++++++++
- android/legacy_signal_inlines.h     | 130 ++++++++++++
- android/legacy_sys_stat_inlines.h   |  48 +++++
- android/legacy_sys_wait_inlines.h   |  50 +++++
+ android/legacy_fenv_inlines_arm.h   | 156 +++++++++++
+ android/legacy_fenv_inlines_mips.h  | 170 ++++++++++++
+ android/legacy_signal_inlines.h     | 130 +++++++++
+ android/legacy_sys_stat_inlines.h   |  48 ++++
+ android/legacy_sys_wait_inlines.h   |  50 ++++
  android/legacy_termios_inlines.h    |   3 -
  android/legacy_threads_inlines.h    |   1 -
  android/set_abort_message.h         |   2 +-
  android/versioning.h                |  21 +-
  arpa/inet.h                         |  12 +-
  bits/bionic_multibyte_result.h      |  17 ++
- bits/fenv_mips.h                    |  98 ++++++++++
+ bits/fenv_mips.h                    |  98 +++++++
  bits/get_device_api_level_inlines.h |   6 +-
  bits/glibc-syscalls.h               |   3 +
  bits/ioctl.h                        |   3 +-
  bits/signal_types.h                 |   2 +-
- bits/stdatomic.h                    | 136 ++++++++++++-
- bits/stdlib_inlines.h               |  47 ++++-
+ bits/stdatomic.h                    | 136 ++++++++-
+ bits/stdlib_inlines.h               |  47 +++-
  bits/swab.h                         |   6 +-
- bits/termios_inlines.h              |  32 ++-
+ bits/termios_inlines.h              |  32 +--
  bits/termios_winsize_inlines.h      |   8 +-
- bits/threads_inlines.h              |  58 +++---
+ bits/threads_inlines.h              |  58 ++--
  bits/wctype.h                       |   6 +-
  complex.h                           |   6 +
- ctype.h                             |  75 ++++---
+ ctype.h                             |  75 +++--
  dirent.h                            |  14 +-
- fcntl.h                             |  33 ++--
- fenv.h                              |  38 ++--
+ fcntl.h                             |  33 ++-
+ fenv.h                              |  38 ++-
  fts.h                               |  12 +-
  ftw.h                               |  15 +-
  inttypes.h                          |  16 +-
  link.h                              |   4 +-
  locale.h                            |  16 +-
  malloc.h                            |   8 +-
- math.h                              | 293 +++++++++++++++++++++++++++-
+ math.h                              | 410 +++++++++++++++++++++++-----
  mntent.h                            |  13 +-
  poll.h                              |   4 +-
  pthread.h                           |  21 +-
  sched.h                             |  10 +-
- search.h                            |  26 ++-
+ search.h                            |  26 +-
  setjmp.h                            |   8 +
- signal.h                            |  43 ++--
+ signal.h                            |  43 ++-
  stdatomic.h                         |   8 +-
  stdio.h                             |  16 +-
- stdlib.h                            | 107 +++++++---
- string.h                            |  42 +++-
+ stdlib.h                            | 115 +++++---
+ string.h                            |  42 ++-
  strings.h                           |  14 +-
  sys/auxv.h                          |   4 +-
  sys/cachectl.h                      |   3 +
- sys/cdefs.h                         |  77 ++++++++
+ sys/cdefs.h                         |  77 ++++++
  sys/endian.h                        |  12 +-
  sys/epoll.h                         |   8 +-
  sys/fsuid.h                         |   6 +-
@@ -68,23 +68,23 @@ Subject: [PATCH] Android NDK r29 Beta 3
  sys/select.h                        |  14 +-
  sys/sendfile.h                      |   6 +-
  sys/signalfd.h                      |   4 +-
- sys/socket.h                        |  39 +++-
- sys/stat.h                          |  51 ++++-
+ sys/socket.h                        |  39 ++-
+ sys/stat.h                          |  51 +++-
  sys/statvfs.h                       |  12 +-
  sys/swap.h                          |   6 +-
  sys/system_properties.h             |   5 +-
  sys/timerfd.h                       |   8 +-
- sys/ucontext.h                      |  69 +++++++
+ sys/ucontext.h                      |  69 +++++
  sys/user.h                          |  16 ++
- sys/vfs.h                           |  46 ++++-
+ sys/vfs.h                           |  46 +++-
  sys/wait.h                          |   7 +-
- sys/xattr.h                         |  26 +--
+ sys/xattr.h                         |  26 +-
  time.h                              |   6 +-
  uchar.h                             |  10 +-
- unistd.h                            |  63 ++++--
- wchar.h                             |  63 ++++--
- wctype.h                            |  38 ++--
- 80 files changed, 2117 insertions(+), 396 deletions(-)
+ unistd.h                            |  63 ++++-
+ wchar.h                             |  63 ++++-
+ wctype.h                            |  38 +--
+ 80 files changed, 2183 insertions(+), 455 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -2421,10 +2421,10 @@ index ba68401..1f2e33a 100644
  #define __MALLINFO_BODY \
    /** Total number of non-mmapped bytes currently allocated from OS. */ \
 diff --git a/math.h b/math.h
-index 59161bf..217bab9 100644
+index 59161bf..8e2560e 100644
 --- a/math.h
 +++ b/math.h
-@@ -62,241 +62,524 @@ typedef __float_t float_t;
+@@ -62,241 +62,525 @@ typedef __float_t float_t;
  
  #define isfinite(x) __builtin_isfinite(x)
  
@@ -2441,108 +2441,120 @@ index 59161bf..217bab9 100644
 +
  double acos(double __x);
  float acosf(float __x);
+-long double acosl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double acosl(long double __x);
++long double acosl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double acosl(long double __x) { return __builtin_acosl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double asin(double __x);
  float asinf(float __x);
+-long double asinl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double asinl(long double __x);
++long double asinl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double asinl(long double __x) { return __builtin_asinl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double atan(double __x);
  float atanf(float __x);
+-long double atanl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double atanl(long double __x);
++long double atanl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double atanl(long double __x) {  return __builtin_atanl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double atan2(double __y, double __x);
  float atan2f(float __y, float __x);
+-long double atan2l(long double __y, long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double atan2l(long double __y, long double __x);
++long double atan2l(long double __y, long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double atan2l(long double __y, long double __x) { return __builtin_atan2l(__y, __x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double cos(double __x);
  float cosf(float __x);
+-long double cosl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double cosl(long double __x);
++long double cosl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double cosl(long double __x) {  return __builtin_cosl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double sin(double __x);
  float sinf(float __x);
+-long double sinl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double sinl(long double __x);
++long double sinl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double sinl(long double __x) { return __builtin_sinl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double tan(double __x);
  float tanf(float __x);
+-long double tanl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double tanl(long double __x);
++long double tanl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double tanl(long double __x) { return __builtin_tanl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double acosh(double __x);
  float acoshf(float __x);
+-long double acoshl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double acoshl(long double __x);
++long double acoshl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double acoshl(long double __x) {  return __builtin_acoshl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double asinh(double __x);
  float asinhf(float __x);
+-long double asinhl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double asinhl(long double __x);
++long double asinhl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double asinhl(long double __x) { return __builtin_asinhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double atanh(double __x);
  float atanhf(float __x);
+-long double atanhl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double atanhl(long double __x);
++long double atanhl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double atanhl(long double __x) {  return __builtin_atanhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double cosh(double __x);
  float coshf(float __x);
+-long double coshl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double coshl(long double __x);
++long double coshl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double coshl(long double __x) { return __builtin_coshl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double sinh(double __x);
  float sinhf(float __x);
+-long double sinhl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double sinhl(long double __x);
++long double sinhl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double sinhl(long double __x) { return __builtin_sinhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
@@ -2552,402 +2564,449 @@ index 59161bf..217bab9 100644
 -long double tanhl(long double __x);
  
 +#if __BIONIC_AVAILABILITY_GUARD(21)
-+long double tanhl(long double __x);
++long double tanhl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double tanhl(long double __x) { return __builtin_tanhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  double exp(double __x);
  float expf(float __x);
+-long double expl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double expl(long double __x);
++long double expl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double expl(long double __x) { return __builtin_expl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double exp2(double __x);
  float exp2f(float __x);
+-long double exp2l(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double exp2l(long double __x);
++long double exp2l(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double exp2l(long double __x) { return __builtin_exp2l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double expm1(double __x);
  float expm1f(float __x);
+-long double expm1l(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double expm1l(long double __x);
++long double expm1l(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double expm1l(long double __x) { return __builtin_expm1l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double frexp(double __x, int* _Nonnull __exponent);
  float frexpf(float __x, int* _Nonnull __exponent);
+-long double frexpl(long double __x, int* _Nonnull __exponent);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double frexpl(long double __x, int* _Nonnull __exponent);
++long double frexpl(long double __x, int* _Nonnull __exponent) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double frexpl(long double __x, int* _Nonnull __exponent) { return __builtin_frexpl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  int ilogb(double __x) __attribute_const__;
  int ilogbf(float __x) __attribute_const__;
+-int ilogbl(long double __x) __attribute_const__;
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- int ilogbl(long double __x) __attribute_const__;
++int ilogbl(long double __x) __attribute_const__ __INTRODUCED_IN(21);
 +#else
 +__static_inline__ int ilogbl(long double __x) { return __builtin_ilogbl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double ldexp(double __x, int __exponent);
  float ldexpf(float __x, int __exponent);
+-long double ldexpl(long double __x, int __exponent);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double ldexpl(long double __x, int __exponent);
++long double ldexpl(long double __x, int __exponent) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double ldexpl(long double __x, int __exponent) { return __builtin_ldexpl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double log(double __x);
  float logf(float __x);
+-long double logl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double logl(long double __x);
++long double logl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double logl(long double __x) { return __builtin_logl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double log10(double __x);
  float log10f(float __x);
+-long double log10l(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double log10l(long double __x);
++long double log10l(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double log10l(long double __x) { return __builtin_log10l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double log1p(double __x);
  float log1pf(float __x);
-+
+-long double log1pl(long double __x);
+ 
+-double log2(double __x);
+-float log2f(float __x);
+-long double log2l(long double __x);
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double log1pl(long double __x);
++long double log1pl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double log1pl(long double __x) { return __builtin_log1pl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
- 
- double log2(double __x);
- float log2f(float __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double log2l(long double __x);
++double log2(double __x) __INTRODUCED_IN(21);
++float log2f(float __x) __INTRODUCED_IN(21);
++long double log2l(long double __x) __INTRODUCED_IN(21);
 +#else
++__static_inline__ double log2(double __x) { return __builtin_log2(__x); }
++__static_inline__ float log2f(float __x) { return __builtin_log2f(__x); }
 +__static_inline__ long double log2l(long double __x) { return __builtin_log2l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double logb(double __x);
  float logbf(float __x);
+-long double logbl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double logbl(long double __x);
++long double logbl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double logbl(long double __x) { return __builtin_logbl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double modf(double __x, double* _Nonnull __integral_part);
  float modff(float __x, float* _Nonnull __integral_part);
+-long double modfl(long double __x, long double* _Nonnull __integral_part);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double modfl(long double __x, long double* _Nonnull __integral_part);
++long double modfl(long double __x, long double* _Nonnull __integral_part) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double modfl(long double __x, long double* _Nonnull __integral_part) { return __builtin_modfl(__x, __integral_part); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double scalbn(double __x, int __exponent);
  float scalbnf(float __x, int __exponent);
+-long double scalbnl(long double __x, int __exponent);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double scalbnl(long double __x, int __exponent);
++long double scalbnl(long double __x, int __exponent) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double scalbnl(long double __x, int __exponent) { return __builtin_scalbnl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double scalbln(double __x, long __exponent);
  float scalblnf(float __x, long __exponent);
+-long double scalblnl(long double __x, long __exponent);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double scalblnl(long double __x, long __exponent);
++long double scalblnl(long double __x, long __exponent) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double scalblnl(long double __x, long __exponent) { return __builtin_scalblnl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double cbrt(double __x);
  float cbrtf(float __x);
+-long double cbrtl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double cbrtl(long double __x);
++long double cbrtl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double cbrtl(long double __x) { return __builtin_cbrtl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fabs(double __x) __attribute_const__;
  float fabsf(float __x) __attribute_const__;
+-long double fabsl(long double __x) __attribute_const__;
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double fabsl(long double __x) __attribute_const__;
++long double fabsl(long double __x) __attribute_const__ __INTRODUCED_IN(21);
 +#else
 +__attribute_const__ __static_inline__ long double fabsl(long double __x) { return __builtin_fabsl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double hypot(double __x, double __y);
  float hypotf(float __x, float __y);
+-long double hypotl(long double __x, long double __y);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double hypotl(long double __x, long double __y);
++long double hypotl(long double __x, long double __y) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double hypotl(long double __x, long double __y) { return __builtin_hypotl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double pow(double __x, double __y);
  float powf(float __x, float __y);
+-long double powl(long double __x, long double __y);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double powl(long double __x, long double __y);
++long double powl(long double __x, long double __y) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double powl(long double __x, long double __y) { return __builtin_powl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double sqrt(double __x);
  float sqrtf(float __x);
+-long double sqrtl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double sqrtl(long double __x);
++long double sqrtl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double sqrtl(long double __x) { return __builtin_sqrtl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double erf(double __x);
  float erff(float __x);
+-long double erfl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double erfl(long double __x);
++long double erfl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double erfl(long double __x) { return __builtin_erfl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double erfc(double __x);
  float erfcf(float __x);
+-long double erfcl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double erfcl(long double __x);
++long double erfcl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double erfcl(long double __x) { return __builtin_erfcl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double lgamma(double __x);
  float lgammaf(float __x);
+-long double lgammal(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double lgammal(long double __x);
++long double lgammal(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double lgammal(long double __x) { return __builtin_lgammal(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double tgamma(double __x);
  float tgammaf(float __x);
+-long double tgammal(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double tgammal(long double __x);
++long double tgammal(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double tgammal(long double __x) { return __builtin_tgammal(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double ceil(double __x);
  float ceilf(float __x);
+-long double ceill(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double ceill(long double __x);
++long double ceill(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double ceill(long double __x) { return __builtin_ceill(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double floor(double __x);
  float floorf(float __x);
+-long double floorl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double floorl(long double __x);
++long double floorl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double floorl(long double __x) { return __builtin_floorl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nearbyint(double __x);
  float nearbyintf(float __x);
+-long double nearbyintl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double nearbyintl(long double __x);
++long double nearbyintl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double nearbyintl(long double __x) { return __builtin_nearbyintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double rint(double __x);
  float rintf(float __x);
+-long double rintl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double rintl(long double __x);
++long double rintl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double rintl(long double __x) { return __builtin_rintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long lrint(double __x);
  long lrintf(float __x);
+-long lrintl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long lrintl(long double __x);
++long lrintl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long lrintl(long double __x) { return __builtin_lrintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long long llrint(double __x);
  long long llrintf(float __x);
+-long long llrintl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long long llrintl(long double __x);
++long long llrintl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long long llrintl(long double __x) { return __builtin_llrintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double round(double __x);
  float roundf(float __x);
+-long double roundl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double roundl(long double __x);
++long double roundl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double roundl(long double __x) { return __builtin_roundl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long lround(double __x);
  long lroundf(float __x);
+-long lroundl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long lroundl(long double __x);
++long lroundl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long lroundl(long double __x) { return __builtin_lroundl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long long llround(double __x);
  long long llroundf(float __x);
+-long long llroundl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long long llroundl(long double __x);
++long long llroundl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long long llroundl(long double __x) { return __builtin_llroundl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double trunc(double __x);
  float truncf(float __x);
+-long double truncl(long double __x);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double truncl(long double __x);
++long double truncl(long double __x) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double truncl(long double __x) { return __builtin_truncl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fmod(double __x, double __y);
  float fmodf(float __x, float __y);
+-long double fmodl(long double __x, long double __y);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double fmodl(long double __x, long double __y);
++long double fmodl(long double __x, long double __y) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double fmodl(long double __x, long double __y) { return __builtin_fmodl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double remainder(double __x, double __y);
  float remainderf(float __x, float __y);
+-long double remainderl(long double __x, long double __y);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double remainderl(long double __x, long double __y);
++long double remainderl(long double __x, long double __y) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double remainderl(long double __x, long double __y) { return __builtin_remainderl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double remquo(double __x, double __y, int* _Nonnull __quotient_bits);
  float remquof(float __x, float __y, int* _Nonnull __quotient_bits);
+-long double remquol(long double __x, long double __y, int* _Nonnull __quotient_bits);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double remquol(long double __x, long double __y, int* _Nonnull __quotient_bits);
++long double remquol(long double __x, long double __y, int* _Nonnull __quotient_bits) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double remquol(long double __x, long double __y, int* _Nonnull __quotient_bits) { return __builtin_remquol(__x, __y, __quotient_bits); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double copysign(double __value, double __sign) __attribute_const__;
  float copysignf(float __value, float __sign) __attribute_const__;
+-long double copysignl(long double __value, long double __sign) __attribute_const__;
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double copysignl(long double __value, long double __sign) __attribute_const__;
++long double copysignl(long double __value, long double __sign) __attribute_const__ __INTRODUCED_IN(21);
 +#else
 +__attribute_const__ __static_inline__ long double copysignl(long double __value, long double __sign) { return __builtin_copysignl(__value, __sign); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nan(const char* _Nonnull __kind) __attribute_const__;
  float nanf(const char* _Nonnull __kind) __attribute_const__;
+-long double nanl(const char* _Nonnull __kind) __attribute_const__;
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double nanl(const char* _Nonnull __kind) __attribute_const__;
++long double nanl(const char* _Nonnull __kind) __attribute_const__ __INTRODUCED_IN(21);
 +#else
 +__attribute_const__ __static_inline__ long double nanl(const char* _Nonnull __kind) { return __builtin_nanl(__kind); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nextafter(double __x, double __y);
  float nextafterf(float __x, float __y);
+-long double nextafterl(long double __x, long double __y);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double nextafterl(long double __x, long double __y);
++long double nextafterl(long double __x, long double __y) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double nextafterl(long double __x, long double __y) { return __builtin_nextafterl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nexttoward(double __x, long double __y);
  float nexttowardf(float __x, long double __y);
+-long double nexttowardl(long double __x, long double __y);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double nexttowardl(long double __x, long double __y);
++long double nexttowardl(long double __x, long double __y) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double nexttowardl(long double __x, long double __y) { return __builtin_nexttowardl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fdim(double __x, double __y);
  float fdimf(float __x, float __y);
+-long double fdiml(long double __x, long double __y);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double fdiml(long double __x, long double __y);
++long double fdiml(long double __x, long double __y) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double fdiml(long double __x, long double __y) { return __builtin_fdiml(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fmax(double __x, double __y) __attribute_const__;
  float fmaxf(float __x, float __y) __attribute_const__;
+-long double fmaxl(long double __x, long double __y) __attribute_const__;
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double fmaxl(long double __x, long double __y) __attribute_const__;
++long double fmaxl(long double __x, long double __y) __attribute_const__ __INTRODUCED_IN(21);
 +#else
 +__attribute_const__ __static_inline__ long double fmaxl(long double __x, long double __y) { return __builtin_fmaxl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fmin(double __x, double __y) __attribute_const__;
  float fminf(float __x, float __y) __attribute_const__;
+-long double fminl(long double __x, long double __y) __attribute_const__;
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double fminl(long double __x, long double __y) __attribute_const__;
++long double fminl(long double __x, long double __y) __attribute_const__ __INTRODUCED_IN(21);
 +#else
 +__attribute_const__ __static_inline__ long double fminl(long double __x, long double __y) { return __builtin_fminl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fma(double __x, double __y, double __z);
  float fmaf(float __x, float __y, float __z);
+-long double fmal(long double __x, long double __y, long double __z);
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
- long double fmal(long double __x, long double __y, long double __z);
++long double fmal(long double __x, long double __y, long double __z) __INTRODUCED_IN(21);
 +#else
 +__static_inline__ long double fmal(long double __x, long double __y, long double __z) { return __builtin_fmal(__x, __y, __z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
@@ -3366,7 +3425,7 @@ index 2c2dc01..eb3ec37 100644
  #if (defined(__STDC_VERSION__) && __STDC_VERSION__ < 201112L) || \
      (defined(__cplusplus) && __cplusplus <= 201103L)
 diff --git a/stdlib.h b/stdlib.h
-index 7081d7c..1474ebd 100644
+index 7081d7c..0e020a8 100644
 --- a/stdlib.h
 +++ b/stdlib.h
 @@ -44,12 +44,19 @@ __BEGIN_DECLS
@@ -3561,9 +3620,25 @@ index 7081d7c..1474ebd 100644
  
  /**
   * [strtod(3)](https://man7.org/linux/man-pages/man3/strtod.3.html) converts a
-@@ -358,17 +405,17 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+@@ -348,6 +395,7 @@ float strtof(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
   */
- long double strtold(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+ 
++#if __BIONIC_AVAILABILITY_GUARD(21)
+ /**
+  * [strtold(3)](https://man7.org/linux/man-pages/man3/strtold.3.html) converts a
+  * string to a long double.
+@@ -356,19 +404,24 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+  * `__end_ptr` is set to the last character in `__s` that was converted.
+  * errno is set to ERANGE if the result overflowed or underflowed.
+  */
+-long double strtold(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
++long double strtold(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr) __INTRODUCED_IN(21);
++#else
++long double strtold(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr) __RENAME(strtod);
++#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
++
++__RENAME
  
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  /** Equivalent to strtold() on Android. */
