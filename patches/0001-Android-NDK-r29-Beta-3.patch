@@ -1,4 +1,4 @@
-From b5043b33fe47661ed2d6e05ddc09e074d71b6c38 Mon Sep 17 00:00:00 2001
+From 67f5b1a6ef30b66545c551f0cc1afe2c950026a1 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -53,7 +53,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  stdatomic.h                         |   8 +-
  stdio.h                             |  16 +-
  stdlib.h                            | 107 +++++++---
- string.h                            |  14 +-
+ string.h                            |  42 +++-
  strings.h                           |  14 +-
  sys/auxv.h                          |   4 +-
  sys/cachectl.h                      |   3 +
@@ -83,7 +83,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  58 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 79 files changed, 2077 insertions(+), 389 deletions(-)
+ 79 files changed, 2101 insertions(+), 393 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -3584,10 +3584,61 @@ index 7081d7c..1474ebd 100644
  __END_DECLS
  
 diff --git a/string.h b/string.h
-index a0a7cc4..fd54a79 100644
+index a0a7cc4..a64d150 100644
 --- a/string.h
 +++ b/string.h
-@@ -194,7 +194,11 @@ size_t strnlen(const char* _Nonnull __s, size_t __n) __attribute_pure__;
+@@ -55,6 +55,8 @@ void* _Nonnull memcpy(void* _Nonnull, const void* _Nonnull, size_t);
+ 
+ #if __BIONIC_AVAILABILITY_GUARD(23)
+ void* _Nonnull mempcpy(void* _Nonnull __dst, const void* _Nonnull __src, size_t __n) __INTRODUCED_IN(23);
++#else
++__static_inline__ void* _Nonnull mempcpy(void* _Nonnull __dst, const void* _Nonnull __src, size_t __n) { return __builtin_mempcpy(__dst, __src, __n); }
+ #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
+ 
+ #endif
+@@ -84,7 +86,11 @@ void* _Nonnull memset_explicit(void* _Nonnull __dst, int __ch, size_t __n) __INT
+ void* _Nullable memmem(const void* _Nonnull __haystack, size_t __haystack_size, const void* _Nonnull __needle, size_t __needle_size) __attribute_pure__;
+ 
+ char* _Nullable strchr(const char* _Nonnull __s, int __ch) __attribute_pure__;
+-char* _Nullable __strchr_chk(const char* _Nonnull __s, int __ch, size_t __n);
++
++#if __BIONIC_AVAILABILITY_GUARD(18)
++char* _Nullable __strchr_chk(const char* _Nonnull __s, int __ch, size_t __n) __INTRODUCED_IN(18);
++#endif /* __BIONIC_AVAILABILITY_GUARD(18) */
++
+ #if defined(__USE_GNU)
+ #if defined(__cplusplus)
+ 
+@@ -103,13 +109,25 @@ char* _Nonnull strchrnul(const char* _Nonnull __s, int __ch) __attribute_pure__
+ #endif
+ 
+ char* _Nullable strrchr(const char* _Nonnull __s, int __ch) __attribute_pure__;
+-char* _Nullable __strrchr_chk(const char* _Nonnull __s, int __ch, size_t __n);
++
++#if __BIONIC_AVAILABILITY_GUARD(18)
++char* _Nullable __strrchr_chk(const char* _Nonnull __s, int __ch, size_t __n) __INTRODUCED_IN(18);
++#endif /* __BIONIC_AVAILABILITY_GUARD(18) */
+ 
+ size_t strlen(const char* _Nonnull __s) __attribute_pure__;
+-size_t __strlen_chk(const char* _Nonnull __s, size_t __n);
++
++#if __BIONIC_AVAILABILITY_GUARD(17)
++size_t __strlen_chk(const char* _Nonnull __s, size_t __n) __INTRODUCED_IN(17);
++#endif /* __BIONIC_AVAILABILITY_GUARD(17) */
+ 
+ int strcmp(const char* _Nonnull __lhs, const char* _Nonnull __rhs) __attribute_pure__;
+-char* _Nonnull stpcpy(char* _Nonnull __dst, const char* _Nonnull __src);
++
++#if __BIONIC_AVAILABILITY_GUARD(21)
++char* _Nonnull stpcpy(char* _Nonnull __dst, const char* _Nonnull __src) __INTRODUCED_IN(21);
++#else
++__static_inline__ char* _Nonnull stpcpy(char* _Nonnull __dst, const char* _Nonnull __src) { return __builtin_stpcpy(__dst, __src); }
++#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
++
+ char* _Nonnull strcpy(char* _Nonnull __dst, const char* _Nonnull __src);
+ char* _Nonnull strcat(char* _Nonnull __dst, const char* _Nonnull __src);
+ char* _Nullable strdup(const char* _Nonnull __s);
+@@ -194,7 +212,13 @@ size_t strnlen(const char* _Nonnull __s, size_t __n) __attribute_pure__;
  char* _Nonnull strncat(char* _Nonnull __dst, const char* _Nonnull __src, size_t __n);
  char* _Nullable strndup(const char* _Nonnull __s, size_t __n);
  int strncmp(const char* _Nonnull __lhs, const char* _Nonnull __rhs, size_t __n) __attribute_pure__;
@@ -3595,12 +3646,14 @@ index a0a7cc4..fd54a79 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +char* _Nonnull stpncpy(char* _Nonnull __dst, const char* _Nonnull __src, size_t __n) __INTRODUCED_IN(21);
++#else
++__static_inline__ char* _Nonnull stpncpy(char* _Nonnull __dst, const char* _Nonnull __src, size_t __n) { return __builtin_stpncpy(__dst, __src, __n); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
 +
  char* _Nonnull strncpy(char* _Nonnull __dst, const char* _Nonnull __src, size_t __n);
  
  size_t strlcat(char* _Nonnull __dst, const char* _Nonnull __src, size_t __n);
-@@ -210,8 +214,10 @@ char* _Nonnull strsignal(int __signal);
+@@ -210,8 +234,10 @@ char* _Nonnull strsignal(int __signal);
  int strcoll(const char* _Nonnull __lhs, const char* _Nonnull __rhs) __attribute_pure__;
  size_t strxfrm(char* __BIONIC_COMPLICATED_NULLNESS __dst, const char* _Nonnull __src, size_t __n);
  
@@ -3613,7 +3666,7 @@ index a0a7cc4..fd54a79 100644
  
  #if defined(__USE_GNU) && !defined(basename)
  /*
-@@ -239,7 +245,7 @@ char* _Nonnull basename(const char* _Nonnull __path) __RENAME(__gnu_basename) __
+@@ -239,7 +265,7 @@ char* _Nonnull basename(const char* _Nonnull __path) __RENAME(__gnu_basename) __
  #endif
  
  /* Const-correct overloads. Placed after FORTIFY so we call those functions, if possible. */
