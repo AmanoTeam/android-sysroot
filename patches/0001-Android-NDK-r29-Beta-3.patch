@@ -1,4 +1,4 @@
-From bafb7b35f6b47dabbbfa0ec567901dcc402ba89a Mon Sep 17 00:00:00 2001
+From 5b9c6fb38f906651e4ff10cf3337463d01b859fb Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -57,7 +57,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  strings.h                           |  14 +-
  sys/auxv.h                          |   4 +-
  sys/cachectl.h                      |   3 +
- sys/cdefs.h                         |  77 ++++++
+ sys/cdefs.h                         |  84 ++++++
  sys/endian.h                        |  12 +-
  sys/epoll.h                         |   8 +-
  sys/fsuid.h                         |   6 +-
@@ -84,7 +84,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++-
  wchar.h                             |  63 ++++-
  wctype.h                            |  38 +--
- 80 files changed, 2319 insertions(+), 472 deletions(-)
+ 80 files changed, 2326 insertions(+), 472 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -4195,7 +4195,7 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 9bd35bb..059efea 100644
+index 9bd35bb..e128239 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
 @@ -42,6 +42,29 @@
@@ -4306,13 +4306,20 @@ index 9bd35bb..059efea 100644
  /*
   * Used when we need to check for overflow when multiplying x and y. This
   * should only be used where __builtin_umull_overflow can not work, because it makes
-@@ -332,9 +391,27 @@
+@@ -332,9 +391,34 @@
   * __builtin_umull_overflow.
   */
  #define __unsafe_check_mul_overflow(x, y) ((__SIZE_TYPE__)-1 / (x) < (y))
 +#endif
 +
++#define __extern_always_inline__ extern __always_inline __inline__ __attribute__((__gnu_inline__))
 +#define __extern_inline__ extern __inline__ __attribute__((__gnu_inline__))
++
++#if defined(__cplusplus)
++	#define __static_inline static inline
++#else
++	#define __static_inline static __inline
++#endif
 +
 +/*
 + * GCC's configure scripts cannot reliably detect symbol availability when
@@ -4322,7 +4329,7 @@ index 9bd35bb..059efea 100644
 +#if defined(__BUILDING_GCC_TARGET_LIBRARIES__)
 +	#define __static_inline__ __extern_inline__
 +#else
-+	#define __static_inline__ static __inline
++	#define __static_inline__ __static_inline
 +#endif
  
  #include <android/versioning.h>
@@ -4550,7 +4557,7 @@ index 05ef2c2..b6a7981 100644
  __END_DECLS
  
 diff --git a/sys/select.h b/sys/select.h
-index 685e6ac..c16706a 100644
+index 685e6ac..02cb87e 100644
 --- a/sys/select.h
 +++ b/sys/select.h
 @@ -70,9 +70,11 @@ typedef struct {
@@ -4583,7 +4590,7 @@ index 685e6ac..c16706a 100644
 +#else
 +#define FD_CLR(fd, set) __FD_CLR(fd, set)
 +#define FD_SET(fd, set) __FD_SET(fd, set)
-+#define FD_SET(fd, set) __FD_ISSET(fd, set)
++#define FD_ISSET(fd, set) __FD_ISSET(fd, set)
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  /**
