@@ -1,4 +1,4 @@
-From 3c3b4d6d1bc50880bff52e8abb28e006a8570efd Mon Sep 17 00:00:00 2001
+From afa9f6fc497b09a66dda331602bf58f38ce70714 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -52,7 +52,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  signal.h                            |  43 ++-
  stdatomic.h                         |   8 +-
  stdio.h                             |  16 +-
- stdlib.h                            | 131 +++++++--
+ stdlib.h                            | 133 +++++++--
  string.h                            |  42 ++-
  strings.h                           |  14 +-
  sys/auxv.h                          |   4 +-
@@ -84,7 +84,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++-
  wchar.h                             |  63 ++++-
  wctype.h                            |  38 +--
- 80 files changed, 2192 insertions(+), 456 deletions(-)
+ 80 files changed, 2194 insertions(+), 456 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -3417,7 +3417,7 @@ index 2c2dc01..eb3ec37 100644
  #if (defined(__STDC_VERSION__) && __STDC_VERSION__ < 201112L) || \
      (defined(__cplusplus) && __cplusplus <= 201103L)
 diff --git a/stdlib.h b/stdlib.h
-index 7081d7c..1c4f44e 100644
+index 7081d7c..298fa86 100644
 --- a/stdlib.h
 +++ b/stdlib.h
 @@ -44,12 +44,19 @@ __BEGIN_DECLS
@@ -3548,16 +3548,16 @@ index 7081d7c..1c4f44e 100644
 -long long llabs(long long __x) __attribute_const__;
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +int abs(int __x) __attribute_const__ __INTRODUCED_IN(21);
-+
-+long labs(long __x) __attribute_const__ __INTRODUCED_IN(21);
-+
-+long long llabs(long long __x) __attribute_const__ __INTRODUCED_IN(21);
  
 -int rand(void);
 -void srand(unsigned int __seed);
 -long random(void);
 -void srandom(unsigned int __seed);
 -int grantpt(int __fd);
++long labs(long __x) __attribute_const__ __INTRODUCED_IN(21);
++
++long long llabs(long long __x) __attribute_const__ __INTRODUCED_IN(21);
++
 +int rand(void) __INTRODUCED_IN(21);
 +void srand(unsigned int __seed) __INTRODUCED_IN(21);
 +long random(void) __INTRODUCED_IN(21);
@@ -3587,7 +3587,7 @@ index 7081d7c..1c4f44e 100644
 +#else
 +__static_inline__ long long strtoll_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base, locale_t _Nonnull __l) {
 +	(void) __l;
-+	return strtoll_l(__s, __end_ptr, __base);
++	return strtoll(__s, __end_ptr, __base);
 +}
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
@@ -3625,7 +3625,7 @@ index 7081d7c..1c4f44e 100644
  /**
   * [strtold(3)](https://man7.org/linux/man-pages/man3/strtold.3.html) converts a
   * string to a long double.
-@@ -356,19 +409,37 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+@@ -356,19 +409,39 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
   * `__end_ptr` is set to the last character in `__s` that was converted.
   * errno is set to ERANGE if the result overflowed or underflowed.
   */
@@ -3655,6 +3655,8 @@ index 7081d7c..1c4f44e 100644
  #else
 -// Implemented as static inlines before 26.
 -#endif
++float strtof(const char* nptr, char** endptr);
++
 +__static_inline__ double strtod_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
 +	(void) __l;
 +	return strtod(__s, __end_ptr);
