@@ -1,4 +1,4 @@
-From afa9f6fc497b09a66dda331602bf58f38ce70714 Mon Sep 17 00:00:00 2001
+From 800f43dd9cc98c313cf36c19699e28b913ae0b67 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -3417,7 +3417,7 @@ index 2c2dc01..eb3ec37 100644
  #if (defined(__STDC_VERSION__) && __STDC_VERSION__ < 201112L) || \
      (defined(__cplusplus) && __cplusplus <= 201103L)
 diff --git a/stdlib.h b/stdlib.h
-index 7081d7c..298fa86 100644
+index 7081d7c..3a3b10e 100644
 --- a/stdlib.h
 +++ b/stdlib.h
 @@ -44,12 +44,19 @@ __BEGIN_DECLS
@@ -3607,17 +3607,19 @@ index 7081d7c..298fa86 100644
  /**
   * [strtof(3)](https://man7.org/linux/man-pages/man3/strtof.3.html) converts a
   * string to a float.
-@@ -336,7 +387,8 @@ unsigned long long strtoull_l(const char* _Nonnull __s, char* _Nullable * _Nulla
+@@ -336,7 +387,10 @@ unsigned long long strtoull_l(const char* _Nonnull __s, char* _Nullable * _Nulla
   * `__end_ptr` is set to the last character in `__s` that was converted.
   * errno is set to ERANGE if the result overflowed or underflowed.
   */
 -float strtof(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
 +float strtof(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr) __INTRODUCED_IN(21);
++#else
++__static_inline__ float strtof(const char* nptr, char** endptr);
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  /**
   * [strtod(3)](https://man7.org/linux/man-pages/man3/strtod.3.html) converts a
-@@ -348,6 +400,7 @@ float strtof(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+@@ -348,6 +402,7 @@ float strtof(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
   */
  double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
  
@@ -3625,7 +3627,7 @@ index 7081d7c..298fa86 100644
  /**
   * [strtold(3)](https://man7.org/linux/man-pages/man3/strtold.3.html) converts a
   * string to a long double.
-@@ -356,19 +409,39 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+@@ -356,19 +411,37 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
   * `__end_ptr` is set to the last character in `__s` that was converted.
   * errno is set to ERANGE if the result overflowed or underflowed.
   */
@@ -3655,8 +3657,6 @@ index 7081d7c..298fa86 100644
  #else
 -// Implemented as static inlines before 26.
 -#endif
-+float strtof(const char* nptr, char** endptr);
-+
 +__static_inline__ double strtod_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
 +	(void) __l;
 +	return strtod(__s, __end_ptr);
