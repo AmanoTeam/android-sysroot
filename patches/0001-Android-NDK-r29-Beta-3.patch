@@ -1,4 +1,4 @@
-From 41abd4374406b38e7f65ab1627353af502965a83 Mon Sep 17 00:00:00 2001
+From 3c3b4d6d1bc50880bff52e8abb28e006a8570efd Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -25,7 +25,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  bits/ioctl.h                        |   3 +-
  bits/signal_types.h                 |   2 +-
  bits/stdatomic.h                    | 136 ++++++++-
- bits/stdlib_inlines.h               |  47 +++-
+ bits/stdlib_inlines.h               |  41 ++-
  bits/swab.h                         |   6 +-
  bits/termios_inlines.h              |  32 +--
  bits/termios_winsize_inlines.h      |   8 +-
@@ -52,7 +52,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  signal.h                            |  43 ++-
  stdatomic.h                         |   8 +-
  stdio.h                             |  16 +-
- stdlib.h                            | 115 +++++---
+ stdlib.h                            | 131 +++++++--
  string.h                            |  42 ++-
  strings.h                           |  14 +-
  sys/auxv.h                          |   4 +-
@@ -84,7 +84,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++-
  wchar.h                             |  63 ++++-
  wctype.h                            |  38 +--
- 80 files changed, 2183 insertions(+), 455 deletions(-)
+ 80 files changed, 2192 insertions(+), 456 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -1268,10 +1268,10 @@ index ebdc9e5..6fa9d3f 100644
  /*
   * 7.17.8 Atomic flag type and operations.
 diff --git a/bits/stdlib_inlines.h b/bits/stdlib_inlines.h
-index fffca19..42ae7db 100644
+index fffca19..917cd18 100644
 --- a/bits/stdlib_inlines.h
 +++ b/bits/stdlib_inlines.h
-@@ -28,21 +28,56 @@
+@@ -28,21 +28,46 @@
  
  #pragma once
  
@@ -1288,6 +1288,7 @@ index fffca19..42ae7db 100644
  __BEGIN_DECLS
  
 -__BIONIC_STDLIB_INLINE double strtod_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
+-  return strtod(__s, __end_ptr);
 +#if !__BIONIC_AVAILABILITY_GUARD(21)
 +__static_inline__ float strtof(const char* nptr, char** endptr) {
 +  double d = strtod(nptr, endptr);
@@ -1299,8 +1300,10 @@ index fffca19..42ae7db 100644
 +    return -__builtin_huge_valf();
 +  }
 +  return __BIONIC_CAST(static_cast, float, d);
-+}
-+
+ }
+ 
+-__BIONIC_STDLIB_INLINE float strtof_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
+-  return strtof(__s, __end_ptr);
 +__static_inline__ double atof(const char *nptr) { return (strtod(nptr, NULL)); }
 +
 +__static_inline__ int abs(int __n) { return __builtin_abs(__n); }
@@ -1319,19 +1322,8 @@ index fffca19..42ae7db 100644
 +
 +__static_inline__ int grantpt(int __fd __attribute((unused))) {
 +  return 0; /* devpts does this all for us! */
-+}
+ }
 +#endif /* !__BIONIC_AVAILABILITY_GUARD(21) */
-+
-+#if !__BIONIC_AVAILABILITY_GUARD(26)
-+__static_inline__ double strtod_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
-   return strtod(__s, __end_ptr);
- }
- 
--__BIONIC_STDLIB_INLINE float strtof_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
-+__static_inline__ float strtof_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
-   return strtof(__s, __end_ptr);
- }
-+#endif /* !__BIONIC_AVAILABILITY_GUARD(26) */
  
  __END_DECLS
 diff --git a/bits/swab.h b/bits/swab.h
@@ -3425,7 +3417,7 @@ index 2c2dc01..eb3ec37 100644
  #if (defined(__STDC_VERSION__) && __STDC_VERSION__ < 201112L) || \
      (defined(__cplusplus) && __cplusplus <= 201103L)
 diff --git a/stdlib.h b/stdlib.h
-index 7081d7c..0e020a8 100644
+index 7081d7c..1c4f44e 100644
 --- a/stdlib.h
 +++ b/stdlib.h
 @@ -44,12 +44,19 @@ __BEGIN_DECLS
@@ -3584,7 +3576,7 @@ index 7081d7c..0e020a8 100644
  
  /**
   * [atoi(3)](https://man7.org/linux/man-pages/man3/atoi.3.html) converts a
-@@ -299,8 +340,10 @@ long strtol_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, i
+@@ -299,8 +340,15 @@ long strtol_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, i
   */
  long long strtoll(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base);
  
@@ -3592,11 +3584,16 @@ index 7081d7c..0e020a8 100644
  /** Equivalent to strtoll() on Android. */
 -long long strtoll_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base, locale_t _Nonnull __l);
 +long long strtoll_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base, locale_t _Nonnull __l) __INTRODUCED_IN(21);
++#else
++__static_inline__ long long strtoll_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base, locale_t _Nonnull __l) {
++	(void) __l;
++	return strtoll_l(__s, __end_ptr, __base);
++}
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  /**
   * [strtoul(3)](https://man7.org/linux/man-pages/man3/strtoul.3.html) converts a
-@@ -325,9 +368,12 @@ unsigned long strtoul_l(const char* _Nonnull __s, char* _Nullable * _Nullable __
+@@ -325,9 +373,12 @@ unsigned long strtoul_l(const char* _Nonnull __s, char* _Nullable * _Nullable __
   */
  unsigned long long strtoull(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, int __base);
  
@@ -3610,7 +3607,7 @@ index 7081d7c..0e020a8 100644
  /**
   * [strtof(3)](https://man7.org/linux/man-pages/man3/strtof.3.html) converts a
   * string to a float.
-@@ -336,7 +382,8 @@ unsigned long long strtoull_l(const char* _Nonnull __s, char* _Nullable * _Nulla
+@@ -336,7 +387,8 @@ unsigned long long strtoull_l(const char* _Nonnull __s, char* _Nullable * _Nulla
   * `__end_ptr` is set to the last character in `__s` that was converted.
   * errno is set to ERANGE if the result overflowed or underflowed.
   */
@@ -3620,7 +3617,7 @@ index 7081d7c..0e020a8 100644
  
  /**
   * [strtod(3)](https://man7.org/linux/man-pages/man3/strtod.3.html) converts a
-@@ -348,6 +395,7 @@ float strtof(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+@@ -348,6 +400,7 @@ float strtof(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
   */
  double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
  
@@ -3628,7 +3625,7 @@ index 7081d7c..0e020a8 100644
  /**
   * [strtold(3)](https://man7.org/linux/man-pages/man3/strtold.3.html) converts a
   * string to a long double.
-@@ -356,19 +404,24 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
+@@ -356,19 +409,37 @@ double strtod(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr);
   * `__end_ptr` is set to the last character in `__s` that was converted.
   * errno is set to ERANGE if the result overflowed or underflowed.
   */
@@ -3637,13 +3634,16 @@ index 7081d7c..0e020a8 100644
 +#else
 +long double strtold(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr) __RENAME(strtod);
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
-+
-+__RENAME
  
 +#if __BIONIC_AVAILABILITY_GUARD(21)
  /** Equivalent to strtold() on Android. */
 -long double strtold_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l);
 +long double strtold_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) __INTRODUCED_IN(21);
++#else
++__static_inline__ long double strtold_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
++	(void) __l;
++	return strtold(__s, __end_ptr);
++}
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
 -#if __ANDROID_API__ >= 26
@@ -3652,9 +3652,18 @@ index 7081d7c..0e020a8 100644
  double strtod_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) __INTRODUCED_IN(26);
  /** Equivalent to strtof() on Android. */
  float strtof_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) __INTRODUCED_IN(26);
--#else
+ #else
 -// Implemented as static inlines before 26.
 -#endif
++__static_inline__ double strtod_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
++	(void) __l;
++	return strtod(__s, __end_ptr);
++}
++
++__static_inline__ float strtof_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
++	(void) __l;
++	return strtof(__s, __end_ptr);
++}
 +#endif /* __BIONIC_AVAILABILITY_GUARD(26) */
  
  __END_DECLS
