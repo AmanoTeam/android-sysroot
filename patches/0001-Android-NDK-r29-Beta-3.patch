@@ -1,4 +1,4 @@
-From 5b9c6fb38f906651e4ff10cf3337463d01b859fb Mon Sep 17 00:00:00 2001
+From aed5bdccbae2ecafe8a5c54e586f459ecb4ecfbc Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -8,56 +8,56 @@ Subject: [PATCH] Android NDK r29 Beta 3
  android/api-level.h                 |   6 +-
  android/configuration.h             |   2 +
  android/dlext.h                     |   4 +-
- android/legacy_fenv_inlines_arm.h   | 156 +++++++++++
- android/legacy_fenv_inlines_mips.h  | 170 ++++++++++++
- android/legacy_signal_inlines.h     | 130 +++++++++
- android/legacy_sys_stat_inlines.h   |  48 ++++
- android/legacy_sys_wait_inlines.h   |  50 ++++
+ android/legacy_fenv_inlines_arm.h   | 156 +++++++++++++++
+ android/legacy_fenv_inlines_mips.h  | 170 ++++++++++++++++
+ android/legacy_signal_inlines.h     | 130 ++++++++++++
+ android/legacy_sys_stat_inlines.h   |  48 +++++
+ android/legacy_sys_wait_inlines.h   |  50 +++++
  android/legacy_termios_inlines.h    |   3 -
  android/legacy_threads_inlines.h    |   1 -
  android/set_abort_message.h         |   2 +-
  android/versioning.h                |  21 +-
  arpa/inet.h                         |  12 +-
  bits/bionic_multibyte_result.h      |  17 ++
- bits/fenv_mips.h                    |  98 +++++++
+ bits/fenv_mips.h                    |  98 +++++++++
  bits/get_device_api_level_inlines.h |   6 +-
  bits/glibc-syscalls.h               |   3 +
  bits/ioctl.h                        |   3 +-
  bits/signal_types.h                 |   2 +-
- bits/stdatomic.h                    | 136 ++++++++-
- bits/stdlib_inlines.h               |  41 ++-
+ bits/stdatomic.h                    | 136 ++++++++++++-
+ bits/stdlib_inlines.h               |  41 +++-
  bits/swab.h                         |   6 +-
- bits/termios_inlines.h              |  32 +--
+ bits/termios_inlines.h              |  32 ++-
  bits/termios_winsize_inlines.h      |   8 +-
- bits/threads_inlines.h              |  58 ++--
+ bits/threads_inlines.h              |  58 +++---
  bits/wctype.h                       |   6 +-
- complex.h                           | 147 ++++++++--
- ctype.h                             |  75 +++--
+ complex.h                           |  48 +++--
+ ctype.h                             |  75 +++----
  dirent.h                            |  14 +-
  fcntl.h                             |  33 ++-
- fenv.h                              |  38 ++-
+ fenv.h                              |  38 ++--
  fts.h                               |  12 +-
  ftw.h                               |  15 +-
  inttypes.h                          |  16 +-
  link.h                              |   4 +-
  locale.h                            |  16 +-
  malloc.h                            |   8 +-
- math.h                              | 410 +++++++++++++++++++++++-----
+ math.h                              | 298 ++++++++++++++++++++++------
  mntent.h                            |  13 +-
  poll.h                              |   4 +-
  pthread.h                           |  21 +-
  sched.h                             |  10 +-
- search.h                            |  26 +-
+ search.h                            |  26 ++-
  setjmp.h                            |   8 +
- signal.h                            |  43 ++-
+ signal.h                            |  43 +++-
  stdatomic.h                         |   8 +-
  stdio.h                             |  16 +-
- stdlib.h                            | 133 +++++++--
- string.h                            |  42 ++-
+ stdlib.h                            | 133 ++++++++++---
+ string.h                            |  42 +++-
  strings.h                           |  14 +-
  sys/auxv.h                          |   4 +-
  sys/cachectl.h                      |   3 +
- sys/cdefs.h                         |  84 ++++++
+ sys/cdefs.h                         |  84 ++++++++
  sys/endian.h                        |  12 +-
  sys/epoll.h                         |   8 +-
  sys/fsuid.h                         |   6 +-
@@ -68,23 +68,23 @@ Subject: [PATCH] Android NDK r29 Beta 3
  sys/select.h                        |  14 +-
  sys/sendfile.h                      |   6 +-
  sys/signalfd.h                      |   4 +-
- sys/socket.h                        |  39 ++-
- sys/stat.h                          |  51 +++-
+ sys/socket.h                        |  39 +++-
+ sys/stat.h                          |  51 ++++-
  sys/statvfs.h                       |  12 +-
  sys/swap.h                          |   6 +-
  sys/system_properties.h             |   5 +-
  sys/timerfd.h                       |   8 +-
- sys/ucontext.h                      |  69 +++++
+ sys/ucontext.h                      |  69 +++++++
  sys/user.h                          |  16 ++
- sys/vfs.h                           |  46 +++-
+ sys/vfs.h                           |  46 ++++-
  sys/wait.h                          |   7 +-
- sys/xattr.h                         |  26 +-
+ sys/xattr.h                         |  26 +--
  time.h                              |   6 +-
  uchar.h                             |  10 +-
- unistd.h                            |  63 ++++-
- wchar.h                             |  63 ++++-
- wctype.h                            |  38 +--
- 80 files changed, 2326 insertions(+), 472 deletions(-)
+ unistd.h                            |  63 +++++-
+ wchar.h                             |  63 ++++--
+ wctype.h                            |  38 ++--
+ 80 files changed, 2115 insertions(+), 472 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -1673,7 +1673,7 @@ index d0cffec..0481af1 100644
  int iswdigit(wint_t __wc);
  int iswgraph(wint_t __wc);
 diff --git a/complex.h b/complex.h
-index 1115862..541db15 100644
+index 1115862..6a268a3 100644
 --- a/complex.h
 +++ b/complex.h
 @@ -44,9 +44,15 @@ _Static_assert(__generic(_Complex_I, float _Complex, 1, 0),
@@ -1692,228 +1692,111 @@ index 1115862..541db15 100644
  #endif
  
  __BEGIN_DECLS
-@@ -57,11 +63,16 @@ __BEGIN_DECLS
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex cacos(double complex __z) __INTRODUCED_IN(23);
- float complex cacosf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex cacos(double complex __z) { return __builtin_cacos(__z); }
-+__static_inline__ float complex cacosf(float complex __z) { return __builtin_cacosf(__z); }
- #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
- 
- 
- #if __BIONIC_AVAILABILITY_GUARD(26)
- long double complex cacosl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex cacosl(long double complex __z) { return __builtin_cacosl(__z); }
- #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.5.2 The casin functions */
-@@ -69,11 +80,15 @@ long double complex cacosl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex casin(double complex __z) __INTRODUCED_IN(23);
+@@ -71,7 +77,6 @@ double complex casin(double complex __z) __INTRODUCED_IN(23);
  float complex casinf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex casin(double complex __z) { return __builtin_casin(__z); }
-+__static_inline__ float complex casinf(float complex __z) { return __builtin_casinf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex casinl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex casinl(long double complex __z) { return __builtin_casinl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.5.1 The catan functions */
-@@ -81,11 +96,15 @@ long double complex casinl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex catan(double complex __z) __INTRODUCED_IN(23);
+@@ -83,7 +88,6 @@ double complex catan(double complex __z) __INTRODUCED_IN(23);
  float complex catanf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex catan(double complex __z) { return __builtin_catan(__z); }
-+__static_inline__ float complex catanf(float complex __z) { return __builtin_catanf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex catanl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex catanl(long double complex __z) { return __builtin_catanl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.5.1 The ccos functions */
-@@ -93,11 +112,15 @@ long double complex catanl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex ccos(double complex __z) __INTRODUCED_IN(23);
+@@ -95,7 +99,6 @@ double complex ccos(double complex __z) __INTRODUCED_IN(23);
  float complex ccosf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex ccos(double complex __z) { return __builtin_ccos(__z); }
-+__static_inline__ float complex ccosf(float complex __z) { return __builtin_ccosf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex ccosl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex ccosl(long double complex __z) { return __builtin_ccosl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.5.1 The csin functions */
-@@ -105,11 +128,15 @@ long double complex ccosl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex csin(double complex __z) __INTRODUCED_IN(23);
+@@ -107,7 +110,6 @@ double complex csin(double complex __z) __INTRODUCED_IN(23);
  float complex csinf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex csin(double complex __z) { return __builtin_csin(__z); }
-+__static_inline__ float complex csinf(float complex __z) { return __builtin_csinf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex csinl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex csinl(long double complex __z) { return __builtin_csinl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.5.1 The ctan functions */
-@@ -117,25 +144,32 @@ long double complex csinl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex ctan(double complex __z) __INTRODUCED_IN(23);
+@@ -119,12 +121,10 @@ double complex ctan(double complex __z) __INTRODUCED_IN(23);
  float complex ctanf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex ctan(double complex __z) { return __builtin_ctan(__z); }
-+__static_inline__ float complex ctanf(float complex __z) { return __builtin_ctanf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex ctanl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex ctanl(long double complex __z) { return __builtin_ctanl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
  
 -
  /* 7.3.6 Hyperbolic functions */
  /* 7.3.6.1 The cacosh functions */
  
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex cacosh(double complex __z) __INTRODUCED_IN(23);
+@@ -133,7 +133,6 @@ double complex cacosh(double complex __z) __INTRODUCED_IN(23);
  float complex cacoshf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex cacosh(double complex __z) { return __builtin_cacosh(__z); }
-+__static_inline__ float complex cacoshf(float complex __z) { return __builtin_cacoshf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex cacoshl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex cacoshl(long double complex __z) { return __builtin_cacoshl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.6.2 The casinh functions */
-@@ -143,11 +177,15 @@ long double complex cacoshl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex casinh(double complex __z) __INTRODUCED_IN(23);
+@@ -145,7 +144,6 @@ double complex casinh(double complex __z) __INTRODUCED_IN(23);
  float complex casinhf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex casinh(double complex __z) { return __builtin_casinh(__z); }
-+__static_inline__ float complex casinhf(float complex __z) { return __builtin_casinhf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex casinhl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex casinhl(long double complex __z) { return __builtin_casinhl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.6.3 The catanh functions */
-@@ -155,11 +193,15 @@ long double complex casinhl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex catanh(double complex __z) __INTRODUCED_IN(23);
+@@ -157,7 +155,6 @@ double complex catanh(double complex __z) __INTRODUCED_IN(23);
  float complex catanhf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex catanh(double complex __z) { return __builtin_catanh(__z); }
-+__static_inline__ float complex catanhf(float complex __z) { return __builtin_catanhf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex catanhl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex catanhl(long double complex __z) { return __builtin_catanhl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.6.4 The ccosh functions */
-@@ -167,11 +209,15 @@ long double complex catanhl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex ccosh(double complex __z) __INTRODUCED_IN(23);
+@@ -169,7 +166,6 @@ double complex ccosh(double complex __z) __INTRODUCED_IN(23);
  float complex ccoshf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex ccosh(double complex __z) { return __builtin_ccosh(__z); }
-+__static_inline__ float complex ccoshf(float complex __z) { return __builtin_ccoshf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex ccoshl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex ccoshl(long double complex __z) { return __builtin_ccoshl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.6.5 The csinh functions */
-@@ -179,11 +225,15 @@ long double complex ccoshl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex csinh(double complex __z) __INTRODUCED_IN(23);
+@@ -181,7 +177,6 @@ double complex csinh(double complex __z) __INTRODUCED_IN(23);
  float complex csinhf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex csinh(double complex __z) { return __builtin_csinh(__z); }
-+__static_inline__ float complex csinhf(float complex __z) { return __builtin_csinhf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex csinhl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex csinhl(long double complex __z) { return __builtin_csinhl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
- 
- /* 7.3.6.6 The ctanh functions */
-@@ -191,32 +241,46 @@ long double complex csinhl(long double complex __z) __INTRODUCED_IN(26);
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex ctanh(double complex __z) __INTRODUCED_IN(23);
+@@ -193,12 +188,10 @@ double complex ctanh(double complex __z) __INTRODUCED_IN(23);
  float complex ctanhf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex ctanh(double complex __z) { return __builtin_ctanh(__z); }
-+__static_inline__ float complex ctanhf(float complex __z) { return __builtin_ctanhf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex ctanhl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex ctanhl(long double complex __z) { return __builtin_ctanhl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
  
 -
  /* 7.3.7 Exponential and logarithmic functions */
  /* 7.3.7.1 The cexp functions */
  
- #if __BIONIC_AVAILABILITY_GUARD(23)
- double complex cexp(double complex __z) __INTRODUCED_IN(23);
+@@ -207,16 +200,18 @@ double complex cexp(double complex __z) __INTRODUCED_IN(23);
  float complex cexpf(float complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex cexp(double complex __z) { return __builtin_cexp(__z); }
-+__static_inline__ float complex cexpf(float complex __z) { return __builtin_cexpf(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  #if __BIONIC_AVAILABILITY_GUARD(26)
  long double complex cexpl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ long double complex cexpl(long double complex __z) { return __builtin_cexpl(__z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(26) */
 +
  /* 7.3.7.2 The clog functions */
@@ -1922,35 +1805,14 @@ index 1115862..541db15 100644
  double complex clog(double complex __z) __INTRODUCED_IN(26);
  float complex clogf(float complex __z) __INTRODUCED_IN(26);
  long double complex clogl(long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ double complex clog(double complex __z) { return __builtin_clog(__z); }
-+__static_inline__ float complex clogf(float complex __z) { return __builtin_clogf(__z); }
-+__static_inline__ long double complex clogl(long double complex __z) { return __builtin_clogl(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
  
 -
  /* 7.3.8 Power and absolute-value functions */
  /* 7.3.8.1 The cabs functions */
  
-@@ -224,6 +288,10 @@ long double complex clogl(long double complex __z) __INTRODUCED_IN(26);
- double cabs(double complex __z) __INTRODUCED_IN(23);
- float cabsf(float complex __z) __INTRODUCED_IN(23);
- long double cabsl(long double complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double cabs(double complex __z) { return __builtin_cabs(__z); }
-+__static_inline__ float cabsf(float complex __z) { return __builtin_cabsf(__z); }
-+__static_inline__ long double cabsl(long double complex __z) { return __builtin_cabsl(__z); }
- #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
- 
- /* 7.3.8.2 The cpow functions */
-@@ -232,39 +300,86 @@ long double cabsl(long double complex __z) __INTRODUCED_IN(23);
- double complex cpow(double complex __x, double complex __z) __INTRODUCED_IN(26);
- float complex cpowf(float complex __x, float complex __z) __INTRODUCED_IN(26);
+@@ -234,37 +229,58 @@ float complex cpowf(float complex __x, float complex __z) __INTRODUCED_IN(26);
  long double complex cpowl(long double complex __x, long double complex __z) __INTRODUCED_IN(26);
-+#else
-+__static_inline__ double complex cpow(double complex __x, double complex __z) { return __builtin_cpow(__x, __z); }
-+__static_inline__ float complex cpowf(float complex __x, float complex __z) { return __builtin_cpowf(__x, __z); }
-+__static_inline__ long double complex cpowl(long double complex __x, long double complex __z) { return __builtin_cpowl(__x, __z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
  
 +
@@ -1960,10 +1822,6 @@ index 1115862..541db15 100644
  double complex csqrt(double complex __z) __INTRODUCED_IN(23);
  float complex csqrtf(float complex __z) __INTRODUCED_IN(23);
  long double complex csqrtl(long double complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex csqrt(double complex __z) { return __builtin_csqrt(__z); }
-+__static_inline__ float complex csqrtf(float complex __z) { return __builtin_csqrtf(__z); }
-+__static_inline__ long double complex csqrtl(long double complex __z) { return __builtin_csqrtl(__z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
  /* 7.3.9 Manipulation functions */
@@ -1973,10 +1831,6 @@ index 1115862..541db15 100644
  double carg(double complex __z) __INTRODUCED_IN(23);
  float cargf(float complex __z) __INTRODUCED_IN(23);
  long double cargl(long double complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double carg(double complex __z) { return __builtin_carg(__z); }
-+__static_inline__ float cargf(float complex __z) { return __builtin_cargf(__z); }
-+__static_inline__ long double cargl(long double complex __z) { return __builtin_cargl(__z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(23) */
 +
  /* 7.3.9.2 The cimag functions */
@@ -1985,10 +1839,6 @@ index 1115862..541db15 100644
  double cimag(double complex __z) __INTRODUCED_IN(23);
  float cimagf(float complex __z) __INTRODUCED_IN(23);
  long double cimagl(long double complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double cimag(double complex __z) { return __builtin_cimag(__z); }
-+__static_inline__ float cimagf(float complex __z) { return __builtin_cimagf(__z); }
-+__static_inline__ long double cimagl(long double complex __z) { return __builtin_cimagl(__z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(23) */
 +
  /* 7.3.9.3 The conj functions */
@@ -1997,10 +1847,6 @@ index 1115862..541db15 100644
  double complex conj(double complex __z) __INTRODUCED_IN(23);
  float complex conjf(float complex __z) __INTRODUCED_IN(23);
  long double complex conjl(long double complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex conj(double complex __z) { return __builtin_conj(__z); }
-+__static_inline__ float complex conjf(float complex __z) { return __builtin_conjf(__z); }
-+__static_inline__ long double complex conjl(long double complex __z) { return __builtin_conjl(__z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(23) */
 +
  /* 7.3.9.4 The cproj functions */
@@ -2009,10 +1855,6 @@ index 1115862..541db15 100644
  double complex cproj(double complex __z) __INTRODUCED_IN(23);
  float complex cprojf(float complex __z) __INTRODUCED_IN(23);
  long double complex cprojl(long double complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double complex cproj(double complex __z) { return __builtin_cproj(__z); }
-+__static_inline__ float complex cprojf(float complex __z) { return __builtin_cprojf(__z); }
-+__static_inline__ long double complex cprojl(long double complex __z) { return __builtin_cprojl(__z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(23) */
 +
  /* 7.3.9.5 The creal functions */
@@ -2021,16 +1863,14 @@ index 1115862..541db15 100644
  double creal(double complex __z) __INTRODUCED_IN(23);
  float crealf(float complex __z) __INTRODUCED_IN(23);
  long double creall(long double complex __z) __INTRODUCED_IN(23);
-+#else
-+__static_inline__ double creal(double complex __z) { return __builtin_creal(__z); }
-+__static_inline__ float crealf(float complex __z) { return __builtin_crealf(__z); }
-+__static_inline__ long double creall(long double complex __z) { return __builtin_creall(__z); }
  #endif /* __BIONIC_AVAILABILITY_GUARD(23) */
  
 -
  __END_DECLS
  
  #endif
++
++#include <pino_complex.h>
 diff --git a/ctype.h b/ctype.h
 index dc3f673..2fcdc6c 100644
 --- a/ctype.h
@@ -2752,10 +2592,10 @@ index ba68401..1f2e33a 100644
  #define __MALLINFO_BODY \
    /** Total number of non-mmapped bytes currently allocated from OS. */ \
 diff --git a/math.h b/math.h
-index 59161bf..8e2560e 100644
+index 59161bf..6a01487 100644
 --- a/math.h
 +++ b/math.h
-@@ -62,241 +62,525 @@ typedef __float_t float_t;
+@@ -62,241 +62,411 @@ typedef __float_t float_t;
  
  #define isfinite(x) __builtin_isfinite(x)
  
@@ -2776,8 +2616,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double acosl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double acosl(long double __x) { return __builtin_acosl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double asin(double __x);
@@ -2786,8 +2624,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double asinl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double asinl(long double __x) { return __builtin_asinl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double atan(double __x);
@@ -2796,8 +2632,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double atanl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double atanl(long double __x) {  return __builtin_atanl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double atan2(double __y, double __x);
@@ -2806,8 +2640,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double atan2l(long double __y, long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double atan2l(long double __y, long double __x) { return __builtin_atan2l(__y, __x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double cos(double __x);
@@ -2816,8 +2648,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double cosl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double cosl(long double __x) {  return __builtin_cosl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double sin(double __x);
@@ -2826,8 +2656,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double sinl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double sinl(long double __x) { return __builtin_sinl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double tan(double __x);
@@ -2836,8 +2664,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double tanl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double tanl(long double __x) { return __builtin_tanl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double acosh(double __x);
@@ -2846,8 +2672,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double acoshl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double acoshl(long double __x) {  return __builtin_acoshl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double asinh(double __x);
@@ -2856,8 +2680,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double asinhl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double asinhl(long double __x) { return __builtin_asinhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double atanh(double __x);
@@ -2866,8 +2688,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double atanhl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double atanhl(long double __x) {  return __builtin_atanhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double cosh(double __x);
@@ -2876,8 +2696,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double coshl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double coshl(long double __x) { return __builtin_coshl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double sinh(double __x);
@@ -2886,8 +2704,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double sinhl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double sinhl(long double __x) { return __builtin_sinhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double tanh(double __x);
@@ -2896,8 +2712,6 @@ index 59161bf..8e2560e 100644
  
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double tanhl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double tanhl(long double __x) { return __builtin_tanhl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  double exp(double __x);
  float expf(float __x);
@@ -2905,8 +2719,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double expl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double expl(long double __x) { return __builtin_expl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double exp2(double __x);
@@ -2915,8 +2727,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double exp2l(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double exp2l(long double __x) { return __builtin_exp2l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double expm1(double __x);
@@ -2925,8 +2735,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double expm1l(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double expm1l(long double __x) { return __builtin_expm1l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double frexp(double __x, int* _Nonnull __exponent);
@@ -2935,8 +2743,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double frexpl(long double __x, int* _Nonnull __exponent) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double frexpl(long double __x, int* _Nonnull __exponent) { return __builtin_frexpl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  int ilogb(double __x) __attribute_const__;
@@ -2945,8 +2751,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +int ilogbl(long double __x) __attribute_const__ __INTRODUCED_IN(21);
-+#else
-+__static_inline__ int ilogbl(long double __x) { return __builtin_ilogbl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double ldexp(double __x, int __exponent);
@@ -2955,8 +2759,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double ldexpl(long double __x, int __exponent) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double ldexpl(long double __x, int __exponent) { return __builtin_ldexpl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double log(double __x);
@@ -2965,8 +2767,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double logl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double logl(long double __x) { return __builtin_logl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double log10(double __x);
@@ -2975,8 +2775,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double log10l(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double log10l(long double __x) { return __builtin_log10l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double log1p(double __x);
@@ -2988,16 +2786,12 @@ index 59161bf..8e2560e 100644
 -long double log2l(long double __x);
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double log1pl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double log1pl(long double __x) { return __builtin_log1pl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +double log2(double __x) __INTRODUCED_IN(21);
 +float log2f(float __x) __INTRODUCED_IN(21);
 +long double log2l(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ double log2(double __x) { return __builtin_log2(__x); }
 +__static_inline__ float log2f(float __x) { return __builtin_log2f(__x); }
 +__static_inline__ long double log2l(long double __x) { return __builtin_log2l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
@@ -3008,8 +2802,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double logbl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double logbl(long double __x) { return __builtin_logbl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double modf(double __x, double* _Nonnull __integral_part);
@@ -3018,8 +2810,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double modfl(long double __x, long double* _Nonnull __integral_part) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double modfl(long double __x, long double* _Nonnull __integral_part) { return __builtin_modfl(__x, __integral_part); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double scalbn(double __x, int __exponent);
@@ -3028,8 +2818,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double scalbnl(long double __x, int __exponent) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double scalbnl(long double __x, int __exponent) { return __builtin_scalbnl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double scalbln(double __x, long __exponent);
@@ -3038,8 +2826,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double scalblnl(long double __x, long __exponent) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double scalblnl(long double __x, long __exponent) { return __builtin_scalblnl(__x, __exponent); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double cbrt(double __x);
@@ -3048,8 +2834,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double cbrtl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double cbrtl(long double __x) { return __builtin_cbrtl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fabs(double __x) __attribute_const__;
@@ -3058,8 +2842,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double fabsl(long double __x) __attribute_const__ __INTRODUCED_IN(21);
-+#else
-+__attribute_const__ __static_inline__ long double fabsl(long double __x) { return __builtin_fabsl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double hypot(double __x, double __y);
@@ -3068,8 +2850,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double hypotl(long double __x, long double __y) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double hypotl(long double __x, long double __y) { return __builtin_hypotl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double pow(double __x, double __y);
@@ -3078,8 +2858,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double powl(long double __x, long double __y) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double powl(long double __x, long double __y) { return __builtin_powl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double sqrt(double __x);
@@ -3088,8 +2866,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double sqrtl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double sqrtl(long double __x) { return __builtin_sqrtl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double erf(double __x);
@@ -3098,8 +2874,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double erfl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double erfl(long double __x) { return __builtin_erfl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double erfc(double __x);
@@ -3108,8 +2882,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double erfcl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double erfcl(long double __x) { return __builtin_erfcl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double lgamma(double __x);
@@ -3118,8 +2890,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double lgammal(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double lgammal(long double __x) { return __builtin_lgammal(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double tgamma(double __x);
@@ -3128,8 +2898,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double tgammal(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double tgammal(long double __x) { return __builtin_tgammal(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double ceil(double __x);
@@ -3138,8 +2906,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double ceill(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double ceill(long double __x) { return __builtin_ceill(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double floor(double __x);
@@ -3148,8 +2914,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double floorl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double floorl(long double __x) { return __builtin_floorl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nearbyint(double __x);
@@ -3158,8 +2922,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double nearbyintl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double nearbyintl(long double __x) { return __builtin_nearbyintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double rint(double __x);
@@ -3168,8 +2930,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double rintl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double rintl(long double __x) { return __builtin_rintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long lrint(double __x);
@@ -3178,8 +2938,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long lrintl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long lrintl(long double __x) { return __builtin_lrintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long long llrint(double __x);
@@ -3188,8 +2946,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long long llrintl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long long llrintl(long double __x) { return __builtin_llrintl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double round(double __x);
@@ -3198,8 +2954,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double roundl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double roundl(long double __x) { return __builtin_roundl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long lround(double __x);
@@ -3208,8 +2962,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long lroundl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long lroundl(long double __x) { return __builtin_lroundl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  long long llround(double __x);
@@ -3218,8 +2970,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long long llroundl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long long llroundl(long double __x) { return __builtin_llroundl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double trunc(double __x);
@@ -3228,8 +2978,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double truncl(long double __x) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double truncl(long double __x) { return __builtin_truncl(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fmod(double __x, double __y);
@@ -3238,8 +2986,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double fmodl(long double __x, long double __y) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double fmodl(long double __x, long double __y) { return __builtin_fmodl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double remainder(double __x, double __y);
@@ -3248,8 +2994,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double remainderl(long double __x, long double __y) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double remainderl(long double __x, long double __y) { return __builtin_remainderl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double remquo(double __x, double __y, int* _Nonnull __quotient_bits);
@@ -3258,8 +3002,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double remquol(long double __x, long double __y, int* _Nonnull __quotient_bits) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double remquol(long double __x, long double __y, int* _Nonnull __quotient_bits) { return __builtin_remquol(__x, __y, __quotient_bits); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double copysign(double __value, double __sign) __attribute_const__;
@@ -3268,8 +3010,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double copysignl(long double __value, long double __sign) __attribute_const__ __INTRODUCED_IN(21);
-+#else
-+__attribute_const__ __static_inline__ long double copysignl(long double __value, long double __sign) { return __builtin_copysignl(__value, __sign); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nan(const char* _Nonnull __kind) __attribute_const__;
@@ -3278,8 +3018,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double nanl(const char* _Nonnull __kind) __attribute_const__ __INTRODUCED_IN(21);
-+#else
-+__attribute_const__ __static_inline__ long double nanl(const char* _Nonnull __kind) { return __builtin_nanl(__kind); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nextafter(double __x, double __y);
@@ -3288,8 +3026,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double nextafterl(long double __x, long double __y) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double nextafterl(long double __x, long double __y) { return __builtin_nextafterl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double nexttoward(double __x, long double __y);
@@ -3298,8 +3034,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double nexttowardl(long double __x, long double __y) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double nexttowardl(long double __x, long double __y) { return __builtin_nexttowardl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fdim(double __x, double __y);
@@ -3308,8 +3042,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double fdiml(long double __x, long double __y) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double fdiml(long double __x, long double __y) { return __builtin_fdiml(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fmax(double __x, double __y) __attribute_const__;
@@ -3318,8 +3050,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double fmaxl(long double __x, long double __y) __attribute_const__ __INTRODUCED_IN(21);
-+#else
-+__attribute_const__ __static_inline__ long double fmaxl(long double __x, long double __y) { return __builtin_fmaxl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fmin(double __x, double __y) __attribute_const__;
@@ -3328,8 +3058,6 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double fminl(long double __x, long double __y) __attribute_const__ __INTRODUCED_IN(21);
-+#else
-+__attribute_const__ __static_inline__ long double fminl(long double __x, long double __y) { return __builtin_fminl(__x, __y); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double fma(double __x, double __y, double __z);
@@ -3338,12 +3066,16 @@ index 59161bf..8e2560e 100644
 +
 +#if __BIONIC_AVAILABILITY_GUARD(21)
 +long double fmal(long double __x, long double __y, long double __z) __INTRODUCED_IN(21);
-+#else
-+__static_inline__ long double fmal(long double __x, long double __y, long double __z) { return __builtin_fmal(__x, __y, __z); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  #define isgreater(x, y) __builtin_isgreater((x), (y))
  #define isgreaterequal(x, y) __builtin_isgreaterequal((x), (y))
+@@ -395,3 +565,5 @@ int isnanl(long double __x) __attribute_const__;
+ #endif
+ 
+ __END_DECLS
++
++#include <pino_math.h>
 diff --git a/mntent.h b/mntent.h
 index 4c03602..74fdfeb 100644
 --- a/mntent.h
