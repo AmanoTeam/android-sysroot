@@ -1,4 +1,4 @@
-From aed5bdccbae2ecafe8a5c54e586f459ecb4ecfbc Mon Sep 17 00:00:00 2001
+From b2fa16aab56756163e4fff68b0051ffffd744f06 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Fri, 1 Aug 2025 17:11:37 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -32,9 +32,9 @@ Subject: [PATCH] Android NDK r29 Beta 3
  bits/threads_inlines.h              |  58 +++---
  bits/wctype.h                       |   6 +-
  complex.h                           |  48 +++--
- ctype.h                             |  75 +++----
+ ctype.h                             |  75 ++++---
  dirent.h                            |  14 +-
- fcntl.h                             |  33 ++-
+ fcntl.h                             |  33 ++--
  fenv.h                              |  38 ++--
  fts.h                               |  12 +-
  ftw.h                               |  15 +-
@@ -42,14 +42,14 @@ Subject: [PATCH] Android NDK r29 Beta 3
  link.h                              |   4 +-
  locale.h                            |  16 +-
  malloc.h                            |   8 +-
- math.h                              | 298 ++++++++++++++++++++++------
+ math.h                              | 296 ++++++++++++++++++++++------
  mntent.h                            |  13 +-
  poll.h                              |   4 +-
  pthread.h                           |  21 +-
  sched.h                             |  10 +-
  search.h                            |  26 ++-
  setjmp.h                            |   8 +
- signal.h                            |  43 +++-
+ signal.h                            |  43 ++--
  stdatomic.h                         |   8 +-
  stdio.h                             |  16 +-
  stdlib.h                            | 133 ++++++++++---
@@ -81,10 +81,10 @@ Subject: [PATCH] Android NDK r29 Beta 3
  sys/xattr.h                         |  26 +--
  time.h                              |   6 +-
  uchar.h                             |  10 +-
- unistd.h                            |  63 +++++-
+ unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 80 files changed, 2115 insertions(+), 472 deletions(-)
+ 80 files changed, 2113 insertions(+), 472 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -2592,10 +2592,10 @@ index ba68401..1f2e33a 100644
  #define __MALLINFO_BODY \
    /** Total number of non-mmapped bytes currently allocated from OS. */ \
 diff --git a/math.h b/math.h
-index 59161bf..6a01487 100644
+index 59161bf..6120b0c 100644
 --- a/math.h
 +++ b/math.h
-@@ -62,241 +62,411 @@ typedef __float_t float_t;
+@@ -62,241 +62,409 @@ typedef __float_t float_t;
  
  #define isfinite(x) __builtin_isfinite(x)
  
@@ -2607,8 +2607,8 @@ index 59161bf..6a01487 100644
  
  #define signbit(x) __builtin_signbit(x)
  
-+__static_inline__ int isinf(double __x) { return __builtin_isinf(__x); }
-+__static_inline__ int isnan(double __x) { return __builtin_isnan(__x); }
++#define isinf(x) __builtin_isinf(x)
++#define isnan(x) __builtin_isnan(x)
 +
  double acos(double __x);
  float acosf(float __x);
@@ -2792,8 +2792,6 @@ index 59161bf..6a01487 100644
 +double log2(double __x) __INTRODUCED_IN(21);
 +float log2f(float __x) __INTRODUCED_IN(21);
 +long double log2l(long double __x) __INTRODUCED_IN(21);
-+__static_inline__ float log2f(float __x) { return __builtin_log2f(__x); }
-+__static_inline__ long double log2l(long double __x) { return __builtin_log2l(__x); }
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
  
  double logb(double __x);
@@ -3070,7 +3068,7 @@ index 59161bf..6a01487 100644
  
  #define isgreater(x, y) __builtin_isgreater((x), (y))
  #define isgreaterequal(x, y) __builtin_isgreaterequal((x), (y))
-@@ -395,3 +565,5 @@ int isnanl(long double __x) __attribute_const__;
+@@ -395,3 +563,5 @@ int isnanl(long double __x) __attribute_const__;
  #endif
  
  __END_DECLS
