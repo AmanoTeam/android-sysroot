@@ -46,7 +46,7 @@ declare -r versions=(
 )
 
 declare -r ndk_archive='/tmp/ndk.zip'
-declare -r ndk_directory='/tmp/android-ndk-r29-beta2'
+declare -r ndk_directory='/tmp/android-ndk-r29-beta3'
 declare -r unsupported_ndk_directory='/tmp/android-ndk-r16b'
 
 declare -r workdir="${PWD}"
@@ -98,7 +98,7 @@ function remove_symbols() {
 
 if ! [ -f "${ndk_archive}" ]; then
 	curl \
-		--url 'https://dl.google.com/android/repository/android-ndk-r29-beta2-linux.zip' \
+		--url 'https://dl.google.com/android/repository/android-ndk-r29-beta3-linux.zip' \
 		--retry '30' \
 		--retry-all-errors \
 		--retry-delay '0' \
@@ -270,6 +270,13 @@ for target in "${targets[@]}"; do
 				--recursive \
 				"${sysroot}/include/asm"* \
 				'./'
+			
+			rm --recursive *'-linux-android'*
+			
+			patch \
+				--directory='./' \
+				--strip='1' \
+				--input="${workdir}/patches/0001-Rename-SIOCGSTAMP-and-SIOCGSTAMPNS.patch"
 		else
 			for name in *'-linux-android'*; do
 				if [ "${name}" != "${triplet}" ]; then
