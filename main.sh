@@ -162,7 +162,7 @@ fi
 
 if ! [ -f "${debian_sysroot_tarball}" ]; then
 	curl \
-		--url 'https://github.com/AmanoTeam/debian-sysroot/releases/download/1.8/mipsel-unknown-linux-gnu2.31.tar.xz' \
+		--url 'https://github.com/AmanoTeam/debian-sysroot/releases/latest/download/mipsel-unknown-linux-gnu2.31.tar.xz' \
 		--retry '30' \
 		--retry-delay '0' \
 		--retry-all-errors \
@@ -177,7 +177,7 @@ if ! [ -f "${debian_sysroot_tarball}" ]; then
 		--file="${debian_sysroot_tarball}"
 	
 	curl \
-		--url 'https://github.com/AmanoTeam/debian-sysroot/releases/download/1.8/mips64el-unknown-linux-gnuabi642.31.tar.xz' \
+		--url 'https://github.com/AmanoTeam/debian-sysroot/releases/latest/download/mips64el-unknown-linux-gnuabi642.31.tar.xz' \
 		--retry '30' \
 		--retry-delay '0' \
 		--retry-all-errors \
