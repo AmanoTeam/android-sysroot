@@ -1,4 +1,4 @@
-From a31d41778519ae1ccfb9a77bc28985b73b848d83 Mon Sep 17 00:00:00 2001
+From ac09fa816fcb5dc36dc995cd52b1d98f6afd2b24 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 21 Aug 2025 22:12:32 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -15,6 +15,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  android/legacy_sys_wait_inlines.h   |  50 +++++
  android/legacy_termios_inlines.h    |   3 -
  android/legacy_threads_inlines.h    |   1 -
+ android/native_window.h             |   2 +-
  android/set_abort_message.h         |   2 +-
  android/versioning.h                |  21 +-
  arpa/inet.h                         |  12 +-
@@ -84,7 +85,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 80 files changed, 2136 insertions(+), 480 deletions(-)
+ 81 files changed, 2137 insertions(+), 481 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -780,6 +781,19 @@ index c614cd0..0a45c72 100644
  #include <bits/threads_inlines.h>
  
  #endif
+diff --git a/android/native_window.h b/android/native_window.h
+index 6f816bf..c43e73a 100644
+--- a/android/native_window.h
++++ b/android/native_window.h
+@@ -372,7 +372,7 @@ int32_t ANativeWindow_setFrameRateWithChangeStrategy(ANativeWindow* window, floa
+  *
+  * \return 0 for success, -EINVAL if the window value is invalid.
+  */
+-inline int32_t ANativeWindow_clearFrameRate(ANativeWindow* window) __INTRODUCED_IN(31) {
++__INTRODUCED_IN(31) inline int32_t ANativeWindow_clearFrameRate(ANativeWindow* window) {
+     return ANativeWindow_setFrameRateWithChangeStrategy(window, 0,
+             ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT,
+             ANATIVEWINDOW_CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
 diff --git a/android/set_abort_message.h b/android/set_abort_message.h
 index 6ad5678..dacea9c 100644
 --- a/android/set_abort_message.h
