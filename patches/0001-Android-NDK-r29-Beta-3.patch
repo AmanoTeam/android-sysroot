@@ -1,4 +1,4 @@
-From ac09fa816fcb5dc36dc995cd52b1d98f6afd2b24 Mon Sep 17 00:00:00 2001
+From 7327c3baf8f45566c251477aef89e622d1376b0e Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 21 Aug 2025 22:12:32 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -52,7 +52,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  setjmp.h                            |   8 +
  signal.h                            |  43 ++--
  stdatomic.h                         |   8 +-
- stdio.h                             |  16 +-
+ stdio.h                             |  18 +-
  stdlib.h                            | 133 ++++++++++---
  string.h                            |  42 +++-
  strings.h                           |  14 +-
@@ -85,7 +85,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 81 files changed, 2137 insertions(+), 481 deletions(-)
+ 81 files changed, 2138 insertions(+), 482 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -3511,9 +3511,18 @@ index b7dac4a..d6b0f38 100644
  # endif
  #endif
 diff --git a/stdio.h b/stdio.h
-index 2c2dc01..eb3ec37 100644
+index 2c2dc01..264f761 100644
 --- a/stdio.h
 +++ b/stdio.h
+@@ -69,7 +69,7 @@ extern FILE* _Nonnull stderr __INTRODUCED_IN(23);
+ #define stderr stderr
+ #else
+ /* Before M the actual symbols for stdin and friends had different names. */
+-extern FILE __sF[] __REMOVED_IN(23, "Use stdin/stdout/stderr");
++extern FILE __sF[] /* __REMOVED_IN(23, "Use stdin/stdout/stderr") */;
+ 
+ #define stdin (&__sF[0])
+ #define stdout (&__sF[1])
 @@ -118,8 +118,11 @@ int fscanf(FILE* _Nonnull __fp, const char* _Nonnull __fmt, ...) __scanflike(2,
  size_t fwrite(const void* _Nonnull __buf, size_t __size, size_t __count, FILE* _Nonnull __fp);
  __nodiscard int getc(FILE* _Nonnull __fp);
