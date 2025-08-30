@@ -49,6 +49,8 @@ declare -r ndk_archive='/tmp/ndk.zip'
 declare -r ndk_directory='/tmp/android-ndk-r29-beta3'
 declare -r unsupported_ndk_directory='/tmp/android-ndk-r16b'
 
+declare -r include_dir="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
+
 declare -r workdir="${PWD}"
 
 function get_arch() {
@@ -113,9 +115,11 @@ if ! [ -f "${ndk_archive}" ]; then
 		"${ndk_archive}"
 	
 	patch \
-		--directory="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" \
+		--directory="${include_dir}" \
 		--strip='1' \
 		--input="${workdir}/patches/0001-Android-NDK-r29-Beta-3.patch"
+	
+	mv "${include_dir}/sys/cdefs.h" './cdefs.h'
 	
 	while read file; do
 		sed \
@@ -141,7 +145,9 @@ if ! [ -f "${ndk_archive}" ]; then
 			--expression 's/__INTRODUCED_IN(34)/__INTRODUCED_IN_API_U__/g; s/__INTRODUCED_IN(__ANDROID_API_U__)/__INTRODUCED_IN_API_U__/g' \
 			--expression 's/__INTRODUCED_IN(35)/__INTRODUCED_IN_API_V__/g; s/__INTRODUCED_IN(__ANDROID_API_V__)/__INTRODUCED_IN_API_V__/g' \
 			"${file}"
-	done <<< $(find "${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" -type 'f')
+	done <<< $(find "${include_dir}" -type 'f')
+	
+	mv './cdefs.h' "${include_dir}/sys/cdefs.h"
 	
 	curl \
 		--url 'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip' \
