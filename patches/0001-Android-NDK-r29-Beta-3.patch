@@ -1,4 +1,4 @@
-From 00e6e10cb717ad56fe3e3cec1b8e55ea51f1b8ae Mon Sep 17 00:00:00 2001
+From 9217b765427761e3acb37a751f9d8a781546e666 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 21 Aug 2025 22:12:32 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -17,7 +17,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  android/legacy_threads_inlines.h    |   1 -
  android/native_window.h             |   2 +-
  android/set_abort_message.h         |   2 +-
- android/versioning.h                |  21 +-
+ android/versioning.h                |  35 +---
  arpa/inet.h                         |  12 +-
  bits/bionic_multibyte_result.h      |  17 ++
  bits/fenv_mips.h                    |  98 +++++++++
@@ -58,7 +58,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  strings.h                           |  14 +-
  sys/auxv.h                          |   8 +-
  sys/cachectl.h                      |   3 +
- sys/cdefs.h                         | 191 ++++++++++++++++++
+ sys/cdefs.h                         | 206 +++++++++++++++++++
  sys/endian.h                        |  12 +-
  sys/epoll.h                         |   8 +-
  sys/fsuid.h                         |   6 +-
@@ -85,7 +85,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 81 files changed, 2108 insertions(+), 902 deletions(-)
+ 81 files changed, 2123 insertions(+), 916 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -169,7 +169,7 @@ index d8d2752..d9357ec 100644
  
 diff --git a/android/legacy_fenv_inlines_arm.h b/android/legacy_fenv_inlines_arm.h
 new file mode 100644
-index 0000000..333c075
+index 0000000..43946d0
 --- /dev/null
 +++ b/android/legacy_fenv_inlines_arm.h
 @@ -0,0 +1,156 @@
@@ -206,7 +206,7 @@ index 0000000..333c075
 +
 +#include <sys/cdefs.h>
 +
-+#if !__BIONIC_AVAILABILITY_GUARD(21) && defined(__arm__)
++#if __ANDROID_API__ < 21 && defined(__arm__)
 +
 +#include <fenv.h>
 +
@@ -326,12 +326,12 @@ index 0000000..333c075
 +
 +__END_DECLS
 +
-+#endif /* !__BIONIC_AVAILABILITY_GUARD(21) && defined(__arm__) */
++#endif /* __ANDROID_API__ < 21 && defined(__arm__) */
 +
 +#endif /* ANDROID_LEGACY_FENV_INLINES_ARM_H */
 diff --git a/android/legacy_fenv_inlines_mips.h b/android/legacy_fenv_inlines_mips.h
 new file mode 100644
-index 0000000..9de7315
+index 0000000..a1eff7c
 --- /dev/null
 +++ b/android/legacy_fenv_inlines_mips.h
 @@ -0,0 +1,170 @@
@@ -368,7 +368,7 @@ index 0000000..9de7315
 +
 +#include <sys/cdefs.h>
 +
-+#if !__BIONIC_AVAILABILITY_GUARD(21) && (defined(__mips__) && !defined(__LP64__))
++#if __ANDROID_API__ < 21 && (defined(__mips__) && !defined(__LP64__))
 +
 +#include <fenv.h>
 +
@@ -502,12 +502,12 @@ index 0000000..9de7315
 +
 +__END_DECLS
 +
-+#endif /* !__BIONIC_AVAILABILITY_GUARD(21) && (defined(__mips__) && !defined(__LP64__)) */
++#endif /* __ANDROID_API__ < 21 && (defined(__mips__) && !defined(__LP64__)) */
 +
 +#endif /* ANDROID_LEGACY_FENV_INLINES_MIPS_H */
 diff --git a/android/legacy_signal_inlines.h b/android/legacy_signal_inlines.h
 new file mode 100644
-index 0000000..151e13c
+index 0000000..b6e674a
 --- /dev/null
 +++ b/android/legacy_signal_inlines.h
 @@ -0,0 +1,130 @@
@@ -544,7 +544,7 @@ index 0000000..151e13c
 +
 +#include <sys/cdefs.h>
 +
-+#if !__BIONIC_AVAILABILITY_GUARD(21)
++#if __ANDROID_API__ < 21
 +
 +#include <errno.h>
 +#include <signal.h>
@@ -638,12 +638,12 @@ index 0000000..151e13c
 +
 +__END_DECLS
 +
-+#endif /* !__BIONIC_AVAILABILITY_GUARD(21) */
++#endif /* __ANDROID_API__ < 21 */
 +
 +#endif /* _ANDROID_LEGACY_SIGNAL_INLINES_H_ */
 diff --git a/android/legacy_sys_stat_inlines.h b/android/legacy_sys_stat_inlines.h
 new file mode 100644
-index 0000000..67785cd
+index 0000000..437e453
 --- /dev/null
 +++ b/android/legacy_sys_stat_inlines.h
 @@ -0,0 +1,48 @@
@@ -680,7 +680,7 @@ index 0000000..67785cd
 +
 +#include <sys/cdefs.h>
 +
-+#if !__BIONIC_AVAILABILITY_GUARD(21)
++#if __ANDROID_API__ < 21
 +
 +#include <sys/stat.h>
 +
@@ -697,7 +697,7 @@ index 0000000..67785cd
 +#endif /* _ANDROID_LEGACY_SYS_STAT_INLINES_H_ */
 diff --git a/android/legacy_sys_wait_inlines.h b/android/legacy_sys_wait_inlines.h
 new file mode 100644
-index 0000000..768d0e0
+index 0000000..553aa95
 --- /dev/null
 +++ b/android/legacy_sys_wait_inlines.h
 @@ -0,0 +1,50 @@
@@ -734,7 +734,7 @@ index 0000000..768d0e0
 +
 +#include <sys/cdefs.h>
 +
-+#if !__BIONIC_AVAILABILITY_GUARD(18)
++#if __ANDROID_API__ < 18
 +
 +#include <sys/syscall.h>
 +#include <sys/wait.h>
@@ -748,7 +748,7 @@ index 0000000..768d0e0
 +
 +__END_DECLS
 +
-+#endif /* !__BIONIC_AVAILABILITY_GUARD(18) */
++#endif /* __ANDROID_API__ < 18 */
 +
 +#endif /* _ANDROID_LEGACY_SYS_WAIT_INLINES_H_ */
 diff --git a/android/legacy_termios_inlines.h b/android/legacy_termios_inlines.h
@@ -809,10 +809,36 @@ index 6ad5678..dacea9c 100644
  
  __END_DECLS
 diff --git a/android/versioning.h b/android/versioning.h
-index 1cf6e51..7e188bb 100644
+index 1cf6e51..b7ff3a8 100644
 --- a/android/versioning.h
 +++ b/android/versioning.h
-@@ -58,15 +58,10 @@
+@@ -27,25 +27,11 @@
+  * details.
+  */
+ #if defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+-// In this mode, Clang will emit weak references to the APIs if the
+-// minSdkVersion is less than the __what argument. This allows the libraries to
+-// load even on systems too old to contain the API, but calls must be guarded
+-// with `__builtin_available(android api_level, *)` to avoid segfaults.
+-#define __BIONIC_AVAILABILITY(__what, ...) __attribute__((__availability__(android,__what __VA_OPT__(,) __VA_ARGS__)))
+-
+ // When the caller is using weak API references, we should expose the decls for
+ // APIs which are not available in the caller's minSdkVersion, otherwise there's
+ // no way to take advantage of the weak references.
+ #define __BIONIC_AVAILABILITY_GUARD(api_level) 1
+ #else
+-// The 'strict' flag is required for NDK clients where the code was not written
+-// to handle the case where the API was available at build-time but not at
+-// run-time. Most 3p code ported to Android was not written to use
+-// `__builtin_available()` for run-time availability checking, and so would not
+-// compile in this mode (or worse, if the build doesn't use
+-// -Werror=unguarded-availability, it would build but crash at runtime).
+-#define __BIONIC_AVAILABILITY(__what, ...) __attribute__((__availability__(android,strict,__what __VA_OPT__(,) __VA_ARGS__)))
+-
+ // When the caller is using strict API references, we hide APIs which are not
+ // available in the caller's minSdkVersion. This is a bionic-only deviation in
+ // behavior from the rest of the NDK headers, but it's necessary to maintain
+@@ -58,15 +44,10 @@
  #define __BIONIC_AVAILABILITY_GUARD(api_level) (__ANDROID_MIN_SDK_VERSION__ >= (api_level))
  #endif
  
@@ -832,7 +858,7 @@ index 1cf6e51..7e188bb 100644
  // The same availability attribute can't be annotated multiple times. Therefore, the macros are
  // defined for the configuration that it is valid for so that declarations like the below doesn't
  // cause inconsistent availability values which is an error with -Wavailability:
-@@ -74,9 +69,13 @@
+@@ -74,9 +55,13 @@
  // void foo() __INTRODUCED_IN_32(30) __INTRODUCED_IN_64(31);
  //
  #if !defined(__LP64__)
@@ -1418,7 +1444,7 @@ index ebdc9e5..0000000
 -	atomic_flag_clear_explicit(__object, memory_order_seq_cst);
 -}
 diff --git a/bits/stdlib_inlines.h b/bits/stdlib_inlines.h
-index fffca19..917cd18 100644
+index fffca19..44fac92 100644
 --- a/bits/stdlib_inlines.h
 +++ b/bits/stdlib_inlines.h
 @@ -28,21 +28,46 @@
@@ -1439,7 +1465,7 @@ index fffca19..917cd18 100644
  
 -__BIONIC_STDLIB_INLINE double strtod_l(const char* _Nonnull __s, char* _Nullable * _Nullable __end_ptr, locale_t _Nonnull __l) {
 -  return strtod(__s, __end_ptr);
-+#if !__BIONIC_AVAILABILITY_GUARD(21)
++#if __ANDROID_API__ < 21
 +__static_inline__ float strtof(const char* nptr, char** endptr) {
 +  double d = strtod(nptr, endptr);
 +  if (d > FLT_MAX) {
@@ -1473,7 +1499,7 @@ index fffca19..917cd18 100644
 +__static_inline__ int grantpt(int __fd __attribute((unused))) {
 +  return 0; /* devpts does this all for us! */
  }
-+#endif /* !__BIONIC_AVAILABILITY_GUARD(21) */
++#endif /* __ANDROID_API__ < 21 */
  
  __END_DECLS
 diff --git a/bits/swab.h b/bits/swab.h
@@ -3484,7 +3510,7 @@ index 6c141cb..4022602 100644
  /**
   * The size in words of a riscv64 jmp_buf. Room for callee-saved registers,
 diff --git a/signal.h b/signal.h
-index 38dcbde..1c6665b 100644
+index 38dcbde..b6d19c6 100644
 --- a/signal.h
 +++ b/signal.h
 @@ -48,11 +48,13 @@ __BEGIN_DECLS
@@ -3577,7 +3603,7 @@ index 38dcbde..1c6665b 100644
  
  __END_DECLS
  
-+#if !__BIONIC_AVAILABILITY_GUARD(21)
++#if __ANDROID_API__ < 21
 +#include <android/legacy_signal_inlines.h>
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
 +
@@ -3767,7 +3793,7 @@ index 2c2dc01..264f761 100644
  #if (defined(__STDC_VERSION__) && __STDC_VERSION__ < 201112L) || \
      (defined(__cplusplus) && __cplusplus <= 201103L)
 diff --git a/stdlib.h b/stdlib.h
-index 7081d7c..3a3b10e 100644
+index 7081d7c..c3e2e50 100644
 --- a/stdlib.h
 +++ b/stdlib.h
 @@ -44,12 +44,19 @@ __BEGIN_DECLS
@@ -3880,14 +3906,14 @@ index 7081d7c..3a3b10e 100644
  #define MB_CUR_MAX __ctype_get_mb_cur_max()
 +#endif /* __BIONIC_AVAILABILITY_GUARD(21) */
 +
-+#if !__BIONIC_AVAILABILITY_GUARD(21)
++#if __ANDROID_API__ < 21
 +/*
 + * Pre-L we didn't have any locale support and so we were always the POSIX
 + * locale. POSIX specifies that MB_CUR_MAX for the POSIX locale is 1:
 + * http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/stdlib.h.html
 + */
 +#define MB_CUR_MAX 1
-+#endif /* !__BIONIC_AVAILABILITY_GUARD(21) */
++#endif /* __ANDROID_API__ < 21 */
  
  #if defined(__BIONIC_INCLUDE_FORTIFY_HEADERS)
  #include <bits/fortify/stdlib.h>
@@ -4210,7 +4236,7 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 9bd35bb..751c39d 100644
+index 9bd35bb..7626f14 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
 @@ -42,6 +42,29 @@
@@ -4321,7 +4347,7 @@ index 9bd35bb..751c39d 100644
  /*
   * Used when we need to check for overflow when multiplying x and y. This
   * should only be used where __builtin_umull_overflow can not work, because it makes
-@@ -332,9 +391,141 @@
+@@ -332,6 +391,153 @@
   * __builtin_umull_overflow.
   */
  #define __unsafe_check_mul_overflow(x, y) ((__SIZE_TYPE__)-1 / (x) < (y))
@@ -4337,132 +4363,144 @@ index 9bd35bb..751c39d 100644
 +#endif
 +
 +#define __static_inline__ __static_inline
- 
- #include <android/versioning.h>
- #include <android/api-level.h>
- #if __has_include(<android/ndk-version.h>)
- #include <android/ndk-version.h>
- #endif
++
++/*
++* Not the best solution, but works for simple cases where Android
++* is the only checked platform.
++*/
++#define android
++#define __builtin_available(version, ...) (android_get_device_api_level() >= version)
++
++#define __PINO_SYMBOL_UNAVAILABLE_ERROR__(a, b) ("This symbol is only available on Android " a " (API level " ___STRING(b) ") or higher")
++
++#if defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
++	#define __PINO_SYMBOL_AVAILABILITY__(...) __attribute__((weak))
++#else
++	#define __PINO_SYMBOL_AVAILABILITY__(a, b) __attribute__((__error__(__PINO_SYMBOL_UNAVAILABLE_ERROR__(a, b))))
++#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_G__
-+	#define __INTRODUCED_IN_API_G__ __attribute__((__error__("This symbol is only available on Android 2.3.0 (API level " ___STRING(ANDROID_API_G) ") or higher")))
++	#define __INTRODUCED_IN_API_G__ __PINO_SYMBOL_AVAILABILITY__("2.3.0", ANDROID_API_G)
 +#else
 +	#define __INTRODUCED_IN_API_G__ __INTRODUCED_IN(__ANDROID_API_G__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_I__
-+	#define __INTRODUCED_IN_API_I__ __attribute__((__error__("This symbol is only available on Android 4.0.1 (API level " ___STRING(__ANDROID_API_I__) ") or higher")))
++	#define __INTRODUCED_IN_API_I__ __PINO_SYMBOL_AVAILABILITY__("4.0.1", __ANDROID_API_I__)
 +#else
 +	#define __INTRODUCED_IN_API_I__ __INTRODUCED_IN(__ANDROID_API_I__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_J__
-+	#define __INTRODUCED_IN_API_J__ __attribute__((__error__("This symbol is only available on Android 4.1 (API level " ___STRING(__ANDROID_API_J__) ") or higher")))
++	#define __INTRODUCED_IN_API_J__ __PINO_SYMBOL_AVAILABILITY__("4.1", __ANDROID_API_J__)
 +#else
 +	#define __INTRODUCED_IN_API_J__ __INTRODUCED_IN(__ANDROID_API_J__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_J_MR1__
-+	#define __INTRODUCED_IN_API_J_MR1__ __attribute__((__error__("This symbol is only available on Android 4.2 (API level " ___STRING(__ANDROID_API_J_MR1__) ") or higher")))
++	#define __INTRODUCED_IN_API_J_MR1__ __PINO_SYMBOL_AVAILABILITY__("4.2", __ANDROID_API_J_MR1__)
 +#else
 +	#define __INTRODUCED_IN_API_J_MR1__ __INTRODUCED_IN(__ANDROID_API_J_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_J_MR2__
-+	#define __INTRODUCED_IN_API_J_MR2__ __attribute__((__error__("This symbol is only available on Android 4.3 (API level " ___STRING(__ANDROID_API_J_MR2__) ") or higher")))
++	#define __INTRODUCED_IN_API_J_MR2__ __PINO_SYMBOL_AVAILABILITY__("4.3", __ANDROID_API_J_MR2__)
 +#else
 +	#define __INTRODUCED_IN_API_J_MR2__ __INTRODUCED_IN(__ANDROID_API_J_MR2__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_K__
-+	#define __INTRODUCED_IN_API_K__ __attribute__((__error__("This symbol is only available on Android 4.4 (API level " ___STRING(__ANDROID_API_K__) ") or higher")))
++	#define __INTRODUCED_IN_API_K__ __PINO_SYMBOL_AVAILABILITY__("4.4", __ANDROID_API_K__)
 +#else
 +	#define __INTRODUCED_IN_API_K__ __INTRODUCED_IN(__ANDROID_API_K__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_L__
-+	#define __INTRODUCED_IN_API_L__ __attribute__((__error__("This symbol is only available on Android 5.0 (API level " ___STRING(__ANDROID_API_L__) ") or higher")))
++	#define __INTRODUCED_IN_API_L__ __PINO_SYMBOL_AVAILABILITY__("5.0", __ANDROID_API_L__)
 +#else
 +	#define __INTRODUCED_IN_API_L__ __INTRODUCED_IN(__ANDROID_API_L__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_L_MR1__
-+	#define __INTRODUCED_IN_API_L_MR1__ __attribute__((__error__("This symbol is only available on Android 5.1 (API level " ___STRING(__ANDROID_API_L_MR1__) ") or higher")))
++	#define __INTRODUCED_IN_API_L_MR1__ __PINO_SYMBOL_AVAILABILITY__("5.1", __ANDROID_API_L_MR1__)
 +#else
 +	#define __INTRODUCED_IN_API_L_MR1__ __INTRODUCED_IN(__ANDROID_API_L_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_M__
-+	#define __INTRODUCED_IN_API_M__ __attribute__((__error__("This symbol is only available on Android 6 (API level " ___STRING(__ANDROID_API_M__) ") or higher")))
++	#define __INTRODUCED_IN_API_M__ __PINO_SYMBOL_AVAILABILITY__("6", __ANDROID_API_M__)
 +#else
 +	#define __INTRODUCED_IN_API_M__ __INTRODUCED_IN(__ANDROID_API_M__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_N__
-+	#define __INTRODUCED_IN_API_N__ __attribute__((__error__("This symbol is only available on Android 7.0 (API level " ___STRING(__ANDROID_API_N__) ") or higher")))
++	#define __INTRODUCED_IN_API_N__ __PINO_SYMBOL_AVAILABILITY__("7.0", __ANDROID_API_N__)
 +#else
 +	#define __INTRODUCED_IN_API_N__ __INTRODUCED_IN(__ANDROID_API_N__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_N_MR1__
-+	#define __INTRODUCED_IN_API_N_MR1__ __attribute__((__error__("This symbol is only available on Android 7.1 (API level " ___STRING(__ANDROID_API_N_MR1__) ") or higher")))
++	#define __INTRODUCED_IN_API_N_MR1__ __PINO_SYMBOL_AVAILABILITY__("7.1", __ANDROID_API_N_MR1__)
 +#else
 +	#define __INTRODUCED_IN_API_N_MR1__ __INTRODUCED_IN(__ANDROID_API_N_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_O__
-+	#define __INTRODUCED_IN_API_O__ __attribute__((__error__("This symbol is only available on Android 8.0 (API level " ___STRING(__ANDROID_API_O__) ") or higher")))
++	#define __INTRODUCED_IN_API_O__ __PINO_SYMBOL_AVAILABILITY__("8.0", __ANDROID_API_O__)
 +#else
 +	#define __INTRODUCED_IN_API_O__ __INTRODUCED_IN(__ANDROID_API_O__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_O_MR1__
-+	#define __INTRODUCED_IN_API_O_MR1__ __attribute__((__error__("This symbol is only available on Android 8.1 (API level " ___STRING(__ANDROID_API_O_MR1__) ") or higher")))
++	#define __INTRODUCED_IN_API_O_MR1__ __PINO_SYMBOL_AVAILABILITY__("8.1", __ANDROID_API_O_MR1__)
 +#else
 +	#define __INTRODUCED_IN_API_O_MR1__ __INTRODUCED_IN(__ANDROID_API_O_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_P__
-+	#define __INTRODUCED_IN_API_P__ __attribute__((__error__("This symbol is only available on Android 9 (API level " ___STRING(__ANDROID_API_P__) ") or higher")))
++	#define __INTRODUCED_IN_API_P__ __PINO_SYMBOL_AVAILABILITY__("9", __ANDROID_API_P__)
 +#else
 +	#define __INTRODUCED_IN_API_P__ __INTRODUCED_IN(__ANDROID_API_P__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_Q__
-+	#define __INTRODUCED_IN_API_Q__ __attribute__((__error__("This symbol is only available on Android 10 (API level " ___STRING(__ANDROID_API_Q__) ") or higher")))
++	#define __INTRODUCED_IN_API_Q__ __PINO_SYMBOL_AVAILABILITY__("10", __ANDROID_API_Q__)
 +#else
 +	#define __INTRODUCED_IN_API_Q__ __INTRODUCED_IN(__ANDROID_API_Q__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_R__
-+	#define __INTRODUCED_IN_API_R__ __attribute__((__error__("This symbol is only available on Android 11 (API level " ___STRING(__ANDROID_API_R__) ") or higher")))
++	#define __INTRODUCED_IN_API_R__ __PINO_SYMBOL_AVAILABILITY__("11", __ANDROID_API_R__)
 +#else
 +	#define __INTRODUCED_IN_API_R__ __INTRODUCED_IN(__ANDROID_API_Q__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_S__
-+	#define __INTRODUCED_IN_API_S__ __attribute__((__error__("This symbol is only available on Android 12 (API level " ___STRING(__ANDROID_API_S__) ") or higher")))
++	#define __INTRODUCED_IN_API_S__ __PINO_SYMBOL_AVAILABILITY__("12", __ANDROID_API_S__)
 +#else
 +	#define __INTRODUCED_IN_API_S__ __INTRODUCED_IN(__ANDROID_API_S__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_T__
-+	#define __INTRODUCED_IN_API_T__ __attribute__((__error__("This symbol is only available on Android 13 (API level " ___STRING(__ANDROID_API_T__) ") or higher")))
++	#define __INTRODUCED_IN_API_T__ __PINO_SYMBOL_AVAILABILITY__("13", __ANDROID_API_T__)
 +#else
 +	#define __INTRODUCED_IN_API_T__ __INTRODUCED_IN(__ANDROID_API_T__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_U__
-+	#define __INTRODUCED_IN_API_U__ __attribute__((__error__("This symbol is only available on Android 14 (API level " ___STRING(__ANDROID_API_U__) ") or higher")))
++	#define __INTRODUCED_IN_API_U__ __PINO_SYMBOL_AVAILABILITY__("14", __ANDROID_API_U__)
 +#else
 +	#define __INTRODUCED_IN_API_U__ __INTRODUCED_IN(__ANDROID_API_U__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_V__
-+	#define __INTRODUCED_IN_API_V__ __attribute__((__error__("This symbol is only available on Android 15 (API level " ___STRING(__ANDROID_API_V__) ") or higher")))
++	#define __INTRODUCED_IN_API_V__ __PINO_SYMBOL_AVAILABILITY__("15", __ANDROID_API_V__)
 +#else
 +	#define __INTRODUCED_IN_API_V__ __INTRODUCED_IN(__ANDROID_API_V__)
 +#endif
+ 
+ #include <android/versioning.h>
+ #include <android/api-level.h>
 diff --git a/sys/endian.h b/sys/endian.h
 index 1c7448c..cb6cd38 100644
 --- a/sys/endian.h
