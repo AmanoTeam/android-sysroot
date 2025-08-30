@@ -1,4 +1,4 @@
-From 7e6d00677f92093211c72b26c4d0400dba6fc705 Mon Sep 17 00:00:00 2001
+From 00e6e10cb717ad56fe3e3cec1b8e55ea51f1b8ae Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 21 Aug 2025 22:12:32 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -4210,7 +4210,7 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 9bd35bb..c502a90 100644
+index 9bd35bb..751c39d 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
 @@ -42,6 +42,29 @@
@@ -4345,121 +4345,121 @@ index 9bd35bb..c502a90 100644
  #endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_G__
-+	#define __INTRODUCED_IN_API_G__ __attribute__((__error__("This symbol is only available in Android 2.3.0 (API level " ___STRING(ANDROID_API_G) ") or higher.")));
++	#define __INTRODUCED_IN_API_G__ __attribute__((__error__("This symbol is only available on Android 2.3.0 (API level " ___STRING(ANDROID_API_G) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_G__ __INTRODUCED_IN(__ANDROID_API_G__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_I__
-+	#define __INTRODUCED_IN_API_I__ __attribute__((__error__("This symbol is only available in Android 4.0.1 (API level " ___STRING(__ANDROID_API_I__) ") or higher.")));
++	#define __INTRODUCED_IN_API_I__ __attribute__((__error__("This symbol is only available on Android 4.0.1 (API level " ___STRING(__ANDROID_API_I__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_I__ __INTRODUCED_IN(__ANDROID_API_I__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_J__
-+	#define __INTRODUCED_IN_API_J__ __attribute__((__error__("This symbol is only available in Android 4.1 (API level " ___STRING(__ANDROID_API_J__) ") or higher.")));
++	#define __INTRODUCED_IN_API_J__ __attribute__((__error__("This symbol is only available on Android 4.1 (API level " ___STRING(__ANDROID_API_J__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_J__ __INTRODUCED_IN(__ANDROID_API_J__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_J_MR1__
-+	#define __INTRODUCED_IN_API_J_MR1__ __attribute__((__error__("This symbol is only available in Android 4.2 (API level " ___STRING(__ANDROID_API_J_MR1__) ") or higher.")));
++	#define __INTRODUCED_IN_API_J_MR1__ __attribute__((__error__("This symbol is only available on Android 4.2 (API level " ___STRING(__ANDROID_API_J_MR1__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_J_MR1__ __INTRODUCED_IN(__ANDROID_API_J_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_J_MR2__
-+	#define __INTRODUCED_IN_API_J_MR2__ __attribute__((__error__("This symbol is only available in Android 4.3 (API level " ___STRING(__ANDROID_API_J_MR2__) ") or higher.")));
++	#define __INTRODUCED_IN_API_J_MR2__ __attribute__((__error__("This symbol is only available on Android 4.3 (API level " ___STRING(__ANDROID_API_J_MR2__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_J_MR2__ __INTRODUCED_IN(__ANDROID_API_J_MR2__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_K__
-+	#define __INTRODUCED_IN_API_K__ __attribute__((__error__("This symbol is only available in Android 4.4 (API level " ___STRING(__ANDROID_API_K__) ") or higher.")));
++	#define __INTRODUCED_IN_API_K__ __attribute__((__error__("This symbol is only available on Android 4.4 (API level " ___STRING(__ANDROID_API_K__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_K__ __INTRODUCED_IN(__ANDROID_API_K__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_L__
-+	#define __INTRODUCED_IN_API_L__ __attribute__((__error__("This symbol is only available in Android 5.0 (API level " ___STRING(__ANDROID_API_L__) ") or higher.")));
++	#define __INTRODUCED_IN_API_L__ __attribute__((__error__("This symbol is only available on Android 5.0 (API level " ___STRING(__ANDROID_API_L__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_L__ __INTRODUCED_IN(__ANDROID_API_L__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_L_MR1__
-+	#define __INTRODUCED_IN_API_L_MR1__ __attribute__((__error__("This symbol is only available in Android 5.1 (API level " ___STRING(__ANDROID_API_L_MR1__) ") or higher.")));
++	#define __INTRODUCED_IN_API_L_MR1__ __attribute__((__error__("This symbol is only available on Android 5.1 (API level " ___STRING(__ANDROID_API_L_MR1__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_L_MR1__ __INTRODUCED_IN(__ANDROID_API_L_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_M__
-+	#define __INTRODUCED_IN_API_M__ __attribute__((__error__("This symbol is only available in Android 6 (API level " ___STRING(__ANDROID_API_M__) ") or higher.")));
++	#define __INTRODUCED_IN_API_M__ __attribute__((__error__("This symbol is only available on Android 6 (API level " ___STRING(__ANDROID_API_M__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_M__ __INTRODUCED_IN(__ANDROID_API_M__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_N__
-+	#define __INTRODUCED_IN_API_N__ __attribute__((__error__("This symbol is only available in Android 7.0 (API level " ___STRING(__ANDROID_API_N__) ") or higher.")));
++	#define __INTRODUCED_IN_API_N__ __attribute__((__error__("This symbol is only available on Android 7.0 (API level " ___STRING(__ANDROID_API_N__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_N__ __INTRODUCED_IN(__ANDROID_API_N__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_N_MR1__
-+	#define __INTRODUCED_IN_API_N_MR1__ __attribute__((__error__("This symbol is only available in Android 7.1 (API level " ___STRING(__ANDROID_API_N_MR1__) ") or higher.")));
++	#define __INTRODUCED_IN_API_N_MR1__ __attribute__((__error__("This symbol is only available on Android 7.1 (API level " ___STRING(__ANDROID_API_N_MR1__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_N_MR1__ __INTRODUCED_IN(__ANDROID_API_N_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_O__
-+	#define __INTRODUCED_IN_API_O__ __attribute__((__error__("This symbol is only available in Android 8.0 (API level " ___STRING(__ANDROID_API_O__) ") or higher.")));
++	#define __INTRODUCED_IN_API_O__ __attribute__((__error__("This symbol is only available on Android 8.0 (API level " ___STRING(__ANDROID_API_O__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_O__ __INTRODUCED_IN(__ANDROID_API_O__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_O_MR1__
-+	#define __INTRODUCED_IN_API_O_MR1__ __attribute__((__error__("This symbol is only available in Android 8.1 (API level " ___STRING(__ANDROID_API_O_MR1__) ") or higher.")));
++	#define __INTRODUCED_IN_API_O_MR1__ __attribute__((__error__("This symbol is only available on Android 8.1 (API level " ___STRING(__ANDROID_API_O_MR1__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_O_MR1__ __INTRODUCED_IN(__ANDROID_API_O_MR1__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_P__
-+	#define __INTRODUCED_IN_API_P__ __attribute__((__error__("This symbol is only available in Android 9 (API level " ___STRING(__ANDROID_API_P__) ") or higher.")));
++	#define __INTRODUCED_IN_API_P__ __attribute__((__error__("This symbol is only available on Android 9 (API level " ___STRING(__ANDROID_API_P__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_P__ __INTRODUCED_IN(__ANDROID_API_P__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_Q__
-+	#define __INTRODUCED_IN_API_Q__ __attribute__((__error__("This symbol is only available in Android 10 (API level " ___STRING(__ANDROID_API_Q__) ") or higher.")));
++	#define __INTRODUCED_IN_API_Q__ __attribute__((__error__("This symbol is only available on Android 10 (API level " ___STRING(__ANDROID_API_Q__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_Q__ __INTRODUCED_IN(__ANDROID_API_Q__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_R__
-+	#define __INTRODUCED_IN_API_R__ __attribute__((__error__("This symbol is only available in Android 11 (API level " ___STRING(__ANDROID_API_R__) ") or higher.")));
++	#define __INTRODUCED_IN_API_R__ __attribute__((__error__("This symbol is only available on Android 11 (API level " ___STRING(__ANDROID_API_R__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_R__ __INTRODUCED_IN(__ANDROID_API_Q__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_S__
-+	#define __INTRODUCED_IN_API_S__ __attribute__((__error__("This symbol is only available in Android 12 (API level " ___STRING(__ANDROID_API_S__) ") or higher.")));
++	#define __INTRODUCED_IN_API_S__ __attribute__((__error__("This symbol is only available on Android 12 (API level " ___STRING(__ANDROID_API_S__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_S__ __INTRODUCED_IN(__ANDROID_API_S__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_T__
-+	#define __INTRODUCED_IN_API_T__ __attribute__((__error__("This symbol is only available in Android 13 (API level " ___STRING(__ANDROID_API_T__) ") or higher.")));
++	#define __INTRODUCED_IN_API_T__ __attribute__((__error__("This symbol is only available on Android 13 (API level " ___STRING(__ANDROID_API_T__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_T__ __INTRODUCED_IN(__ANDROID_API_T__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_U__
-+	#define __INTRODUCED_IN_API_U__ __attribute__((__error__("This symbol is only available in Android 14 (API level " ___STRING(__ANDROID_API_U__) ") or higher.")));
++	#define __INTRODUCED_IN_API_U__ __attribute__((__error__("This symbol is only available on Android 14 (API level " ___STRING(__ANDROID_API_U__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_U__ __INTRODUCED_IN(__ANDROID_API_U__)
 +#endif
 +
 +#if __ANDROID_API__ < __ANDROID_API_V__
-+	#define __INTRODUCED_IN_API_V__ __attribute__((__error__("This symbol is only available in Android 15 (API level " ___STRING(__ANDROID_API_V__) ") or higher.")));
++	#define __INTRODUCED_IN_API_V__ __attribute__((__error__("This symbol is only available on Android 15 (API level " ___STRING(__ANDROID_API_V__) ") or higher")))
 +#else
 +	#define __INTRODUCED_IN_API_V__ __INTRODUCED_IN(__ANDROID_API_V__)
 +#endif
