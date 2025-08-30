@@ -117,6 +117,32 @@ if ! [ -f "${ndk_archive}" ]; then
 		--strip='1' \
 		--input="${workdir}/patches/0001-Android-NDK-r29-Beta-3.patch"
 	
+	while read file; do
+		sed \
+			--in-place \
+			--expression 's/__INTRODUCED_IN(9)/__INTRODUCED_IN_API_G__/g; s/__INTRODUCED_IN(__ANDROID_API_G__)/__INTRODUCED_IN_API_G__/g' \
+			--expression 's/__INTRODUCED_IN(14)/__INTRODUCED_IN_API_I__/g; s/__INTRODUCED_IN(__ANDROID_API_I__)/__INTRODUCED_IN_API_I__/g' \
+			--expression 's/__INTRODUCED_IN(16)/__INTRODUCED_IN_API_J__/g; s/__INTRODUCED_IN(__ANDROID_API_J__)/__INTRODUCED_IN_API_J__/g' \
+			--expression 's/__INTRODUCED_IN(17)/__INTRODUCED_IN_API_J_MR1__/g; s/__INTRODUCED_IN(__ANDROID_API_J_MR1__)/__INTRODUCED_IN_API_J_MR1__/g' \
+			--expression 's/__INTRODUCED_IN(18)/__INTRODUCED_IN_API_J_MR2__/g; s/__INTRODUCED_IN(__ANDROID_API_J_MR2__)/__INTRODUCED_IN_API_J_MR2__/g' \
+			--expression 's/__INTRODUCED_IN(19)/__INTRODUCED_IN_API_K__/g; s/__INTRODUCED_IN(__ANDROID_API_K__)/__INTRODUCED_IN_API_K__/g' \
+			--expression 's/__INTRODUCED_IN(21)/__INTRODUCED_IN_API_L__/g; s/__INTRODUCED_IN(__ANDROID_API_L__)/__INTRODUCED_IN_API_L__/g' \
+			--expression 's/__INTRODUCED_IN(22)/__INTRODUCED_IN_API_L_MR1__/g; s/__INTRODUCED_IN(__ANDROID_API_L_MR1__)/__INTRODUCED_IN_API_L_MR1__/g' \
+			--expression 's/__INTRODUCED_IN(23)/__INTRODUCED_IN_API_M__/g; s/__INTRODUCED_IN(__ANDROID_API_M__)/__INTRODUCED_IN_API_M__/g' \
+			--expression 's/__INTRODUCED_IN(24)/__INTRODUCED_IN_API_N__/g; s/__INTRODUCED_IN(__ANDROID_API_N__)/__INTRODUCED_IN_API_N__/g' \
+			--expression 's/__INTRODUCED_IN(25)/__INTRODUCED_IN_API_N_MR1__/g; s/__INTRODUCED_IN(__ANDROID_API_N_MR1__)/__INTRODUCED_IN_API_N_MR1__/g' \
+			--expression 's/__INTRODUCED_IN(26)/__INTRODUCED_IN_API_O__/g; s/__INTRODUCED_IN(__ANDROID_API_O__)/__INTRODUCED_IN_API_O__/g' \
+			--expression 's/__INTRODUCED_IN(27)/__INTRODUCED_IN_API_O_MR1__/g; s/__INTRODUCED_IN(__ANDROID_API_O_MR1__)/__INTRODUCED_IN_API_O_MR1__/g' \
+			--expression 's/__INTRODUCED_IN(28)/__INTRODUCED_IN_API_P__/g; s/__INTRODUCED_IN(__ANDROID_API_P__)/__INTRODUCED_IN_API_P__/g' \
+			--expression 's/__INTRODUCED_IN(29)/__INTRODUCED_IN_API_Q__/g; s/__INTRODUCED_IN(__ANDROID_API_Q__)/__INTRODUCED_IN_API_Q__/g' \
+			--expression 's/__INTRODUCED_IN(30)/__INTRODUCED_IN_API_R__/g; s/__INTRODUCED_IN(__ANDROID_API_R__)/__INTRODUCED_IN_API_R__/g' \
+			--expression 's/__INTRODUCED_IN(31)/__INTRODUCED_IN_API_S__/g; s/__INTRODUCED_IN(__ANDROID_API_S__)/__INTRODUCED_IN_API_S__/g' \
+			--expression 's/__INTRODUCED_IN(33)/__INTRODUCED_IN_API_T__/g; s/__INTRODUCED_IN(__ANDROID_API_T__)/__INTRODUCED_IN_API_T__/g' \
+			--expression 's/__INTRODUCED_IN(34)/__INTRODUCED_IN_API_U__/g; s/__INTRODUCED_IN(__ANDROID_API_U__)/__INTRODUCED_IN_API_U__/g' \
+			--expression 's/__INTRODUCED_IN(35)/__INTRODUCED_IN_API_V__/g; s/__INTRODUCED_IN(__ANDROID_API_V__)/__INTRODUCED_IN_API_V__/g' \
+			"${file}"
+	done <<< $(find "${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include" -type 'f')
+	
 	curl \
 		--url 'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip' \
 		--retry '30' \
