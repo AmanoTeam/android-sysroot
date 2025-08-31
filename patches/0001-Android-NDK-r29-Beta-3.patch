@@ -1,4 +1,4 @@
-From 666cc21768250c6b34f57c821e5404a863aeb316 Mon Sep 17 00:00:00 2001
+From 681081d80c8d839136101fe0dd981f7d37b3f1b0 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 21 Aug 2025 22:12:32 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -24,6 +24,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  bits/get_device_api_level_inlines.h |   6 +-
  bits/glibc-syscalls.h               |   3 +
  bits/ioctl.h                        |   3 +-
+ bits/sigcontext_riscv64.h           |  27 +++
  bits/signal_types.h                 |  33 +++-
  bits/stdatomic.h                    | 288 ---------------------------
  bits/stdlib_inlines.h               |  41 +++-
@@ -50,7 +51,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  sched.h                             |  10 +-
  search.h                            |  26 ++-
  setjmp.h                            |   8 +
- signal.h                            |  43 ++--
+ signal.h                            |  52 +++--
  stdatomic.h                         | 135 -------------
  stdio.h                             |  18 +-
  stdlib.h                            | 133 ++++++++++---
@@ -85,13 +86,14 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 81 files changed, 2243 insertions(+), 916 deletions(-)
+ 82 files changed, 2279 insertions(+), 916 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
  create mode 100644 android/legacy_sys_stat_inlines.h
  create mode 100644 android/legacy_sys_wait_inlines.h
  create mode 100644 bits/fenv_mips.h
+ create mode 100755 bits/sigcontext_riscv64.h
  delete mode 100644 bits/stdatomic.h
  delete mode 100644 stdatomic.h
 
@@ -1215,6 +1217,39 @@ index ae75880..ad328b0 100644
  /* enable_if(1) just exists to break overloading ties. */
  int ioctl(int __fd, unsigned __op, ...) __overloadable __enable_if(1, "") __RENAME(ioctl);
  #endif
+diff --git a/bits/sigcontext_riscv64.h b/bits/sigcontext_riscv64.h
+new file mode 100755
+index 0000000..0e68836
+--- /dev/null
++++ b/bits/sigcontext_riscv64.h
+@@ -0,0 +1,27 @@
++/* Machine-dependent signal context structure for Linux.  RISC-V version.
++   Copyright (C) 1996-2025 Free Software Foundation, Inc.  This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#ifndef _BITS_SIGCONTEXT_H
++#define _BITS_SIGCONTEXT_H 1
++
++struct sigcontext {
++  /* gregs[0] holds the program counter.  */
++  unsigned long int gregs[32];
++  unsigned long long int fpregs[66] __attribute__ ((__aligned__ (16)));
++};
++
++#endif
 diff --git a/bits/signal_types.h b/bits/signal_types.h
 index 41a697e..6a8c6a8 100644
 --- a/bits/signal_types.h
@@ -3634,10 +3669,27 @@ index 6c141cb..4022602 100644
  /**
   * The size in words of a riscv64 jmp_buf. Room for callee-saved registers,
 diff --git a/signal.h b/signal.h
-index 38dcbde..b6d19c6 100644
+index 38dcbde..7151fd1 100644
 --- a/signal.h
 +++ b/signal.h
-@@ -48,11 +48,13 @@ __BEGIN_DECLS
+@@ -32,7 +32,16 @@
+ #include <sys/cdefs.h>
+ #include <sys/types.h>
+ 
++#if defined(__riscv) && defined(__GNUC__)
++/*
++* The unwinder used by GCC requires a generic definition of the sigcontext struct,
++* but Bionic does not provide that.
++*/
++#include <bits/sigcontext_riscv64.h>
++#else
+ #include <asm/sigcontext.h>
++#endif
++
+ #include <bits/pthread_types.h>
+ #include <bits/signal_types.h>
+ #include <bits/timespec.h>
+@@ -48,11 +57,13 @@ __BEGIN_DECLS
   */
  #define SIG_HOLD __BIONIC_CAST(reinterpret_cast, sighandler_t, 2)
  
@@ -3653,7 +3705,7 @@ index 38dcbde..b6d19c6 100644
  
  extern const char* _Nonnull const sys_siglist[_NSIG];
  extern const char* _Nonnull const sys_signame[_NSIG]; /* BSD compatibility. */
-@@ -68,32 +70,42 @@ int sigaction64(int __signal, const struct sigaction64* _Nullable __new_action,
+@@ -68,32 +79,42 @@ int sigaction64(int __signal, const struct sigaction64* _Nullable __new_action,
  
  int siginterrupt(int __signal, int __flag);
  
@@ -3702,7 +3754,7 @@ index 38dcbde..b6d19c6 100644
  
  #if __BIONIC_AVAILABILITY_GUARD(28)
  int sigismember64(const sigset64_t* _Nonnull __set, int __signal) __INTRODUCED_IN(28);
-@@ -145,12 +157,17 @@ sighandler_t _Nonnull sigset(int __signal, sighandler_t _Nullable __handler)
+@@ -145,12 +166,17 @@ sighandler_t _Nonnull sigset(int __signal, sighandler_t _Nullable __handler)
  int raise(int __signal);
  int kill(pid_t __pid, int __signal);
  int killpg(int __pgrp, int __signal);
@@ -3723,7 +3775,7 @@ index 38dcbde..b6d19c6 100644
  
  int pthread_kill(pthread_t __pthread, int __signal);
  #if defined(__USE_GNU)
-@@ -224,4 +241,8 @@ int str2sig(const char* _Nonnull __name, int* _Nonnull __signal) __INTRODUCED_IN
+@@ -224,4 +250,8 @@ int str2sig(const char* _Nonnull __name, int* _Nonnull __signal) __INTRODUCED_IN
  
  __END_DECLS
  
