@@ -1,11 +1,11 @@
-From 9217b765427761e3acb37a751f9d8a781546e666 Mon Sep 17 00:00:00 2001
+From 666cc21768250c6b34f57c821e5404a863aeb316 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 21 Aug 2025 22:12:32 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
 
 ---
  SLES/OpenSLES_Platform.h            |   2 +-
- android/api-level.h                 |   6 +-
+ android/api-level.h                 |  46 ++++-
  android/configuration.h             |   2 +
  android/dlext.h                     |   4 +-
  android/legacy_fenv_inlines_arm.h   | 156 +++++++++++++++
@@ -58,7 +58,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  strings.h                           |  14 +-
  sys/auxv.h                          |   8 +-
  sys/cachectl.h                      |   3 +
- sys/cdefs.h                         | 206 +++++++++++++++++++
+ sys/cdefs.h                         | 286 +++++++++++++++++++++++++++
  sys/endian.h                        |  12 +-
  sys/epoll.h                         |   8 +-
  sys/fsuid.h                         |   6 +-
@@ -85,7 +85,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 81 files changed, 2123 insertions(+), 916 deletions(-)
+ 81 files changed, 2243 insertions(+), 916 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -109,10 +109,134 @@ index 5dc3006..3f51c2d 100644
  
  #endif /* _OPENSLES_PLATFORM_H_ */
 diff --git a/android/api-level.h b/android/api-level.h
-index c9536c1..957d9d3 100644
+index c9536c1..e86da4c 100644
 --- a/android/api-level.h
 +++ b/android/api-level.h
-@@ -196,12 +196,10 @@ int android_get_application_target_sdk_version() __INTRODUCED_IN(24);
+@@ -96,83 +96,123 @@ __BEGIN_DECLS
+ #define __ANDROID_API__ __ANDROID_API_FUTURE__
+ #endif
+ 
++#if !defined(__ANDROID_API_G__)
+ /** Names the Gingerbread API level (9), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_G__ 9
++#endif
+ 
++#if !defined(__ANDROID_API_I__)
+ /** Names the Ice-Cream Sandwich API level (14), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_I__ 14
++#endif
+ 
++#if !defined(__ANDROID_API_J__)
+ /** Names the Jellybean API level (16), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_J__ 16
++#endif
+ 
++#if !defined(__ANDROID_API_J_MR1__)
+ /** Names the Jellybean MR1 API level (17), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_J_MR1__ 17
++#endif
+ 
++#if !defined(__ANDROID_API_J_MR2__)
+ /** Names the Jellybean MR2 API level (18), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_J_MR2__ 18
++#endif
+ 
++#if !defined(__ANDROID_API_K__)
+ /** Names the KitKat API level (19), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_K__ 19
++#endif
+ 
++#if !defined(__ANDROID_API_L__)
+ /** Names the Lollipop API level (21), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_L__ 21
++#endif
+ 
++#if !defined(__ANDROID_API_L_MR1__)
+ /** Names the Lollipop MR1 API level (22), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_L_MR1__ 22
++#endif
+ 
++#if !defined(__ANDROID_API_M__)
+ /** Names the Marshmallow API level (23), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_M__ 23
++#endif
+ 
++#if !defined(__ANDROID_API_N__)
+ /** Names the Nougat API level (24), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_N__ 24
++#endif
+ 
++#if !defined(__ANDROID_API_N_MR1__)
+ /** Names the Nougat MR1 API level (25), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_N_MR1__ 25
++#endif
+ 
++#if !defined(__ANDROID_API_O__)
+ /** Names the Oreo API level (26), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_O__ 26
++#endif
+ 
++#if !defined(__ANDROID_API_O_MR1__)
+ /** Names the Oreo MR1 API level (27), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_O_MR1__ 27
++#endif
+ 
++#if !defined(__ANDROID_API_P__)
+ /** Names the Pie API level (28), for comparison against `__ANDROID_API__`. */
+ #define __ANDROID_API_P__ 28
++#endif
+ 
++#if !defined(__ANDROID_API_Q__)
+ /**
+  * Names the Android 10 (aka "Q" or "Quince Tart") API level (29), for
+  * comparison against `__ANDROID_API__`.
+  */
+ #define __ANDROID_API_Q__ 29
++#endif
+ 
++#if !defined(__ANDROID_API_R__)
+ /**
+  * Names the Android 11 (aka "R" or "Red Velvet Cake") API level (30), for
+  * comparison against `__ANDROID_API__`.
+  */
+ #define __ANDROID_API_R__ 30
++#endif
+ 
++#if !defined(__ANDROID_API_S__)
+ /**
+  * Names the Android 12 (aka "S" or "Snowcone") API level (31), for
+  * comparison against `__ANDROID_API__`.
+  */
+ #define __ANDROID_API_S__ 31
++#endif
+ 
++#if !defined(__ANDROID_API_T__)
+ /**
+  * Names the Android 13 (aka "T" or "Tiramisu") API level (33), for
+  * comparison against `__ANDROID_API__`.
+  */
+ #define __ANDROID_API_T__ 33
++#endif
+ 
++#if !defined(__ANDROID_API_U__)
+ /**
+  * Names the Android 14 (aka "U" or "UpsideDownCake") API level (34),
+  * for comparison against `__ANDROID_API__`.
+  */
+ #define __ANDROID_API_U__ 34
++#endif
+ 
++#if !defined(__ANDROID_API_V__)
+ /**
+  * Names the Android 15 (aka "V" or "VanillaIceCream") API level (35),
+  * for comparison against `__ANDROID_API__`.
+  */
+ #define __ANDROID_API_V__ 35
++#endif
+ 
+ /* This file is included in <features.h>, and might be used from .S files. */
+ #if !defined(__ASSEMBLY__)
+@@ -196,12 +236,10 @@ int android_get_application_target_sdk_version() __INTRODUCED_IN(24);
  
  
  #if __ANDROID_API__ < 29
@@ -4236,7 +4360,7 @@ index d06d683..cae83e4 100644
  __BEGIN_DECLS
  
 diff --git a/sys/cdefs.h b/sys/cdefs.h
-index 9bd35bb..7626f14 100644
+index 9bd35bb..f48952e 100644
 --- a/sys/cdefs.h
 +++ b/sys/cdefs.h
 @@ -42,6 +42,29 @@
@@ -4347,7 +4471,7 @@ index 9bd35bb..7626f14 100644
  /*
   * Used when we need to check for overflow when multiplying x and y. This
   * should only be used where __builtin_umull_overflow can not work, because it makes
-@@ -332,6 +391,153 @@
+@@ -332,6 +391,233 @@
   * __builtin_umull_overflow.
   */
  #define __unsafe_check_mul_overflow(x, y) ((__SIZE_TYPE__)-1 / (x) < (y))
@@ -4363,6 +4487,86 @@ index 9bd35bb..7626f14 100644
 +#endif
 +
 +#define __static_inline__ __static_inline
++
++#if !defined(__ANDROID_API_G__)
++#define __ANDROID_API_G__ 9
++#endif
++
++#if !defined(__ANDROID_API_I__)
++#define __ANDROID_API_I__ 14
++#endif
++
++#if !defined(__ANDROID_API_J__)
++#define __ANDROID_API_J__ 16
++#endif
++
++#if !defined(__ANDROID_API_J_MR1__)
++#define __ANDROID_API_J_MR1__ 17
++#endif
++
++#if !defined(__ANDROID_API_J_MR2__)
++#define __ANDROID_API_J_MR2__ 18
++#endif
++
++#if !defined(__ANDROID_API_K__)
++#define __ANDROID_API_K__ 19
++#endif
++
++#if !defined(__ANDROID_API_L__)
++#define __ANDROID_API_L__ 21
++#endif
++
++#if !defined(__ANDROID_API_L_MR1__)
++#define __ANDROID_API_L_MR1__ 22
++#endif
++
++#if !defined(__ANDROID_API_M__)
++#define __ANDROID_API_M__ 23
++#endif
++
++#if !defined(__ANDROID_API_N__)
++#define __ANDROID_API_N__ 24
++#endif
++
++#if !defined(__ANDROID_API_N_MR1__)
++#define __ANDROID_API_N_MR1__ 25
++#endif
++
++#if !defined(__ANDROID_API_O__)
++#define __ANDROID_API_O__ 26
++#endif
++
++#if !defined(__ANDROID_API_O_MR1__)
++#define __ANDROID_API_O_MR1__ 27
++#endif
++
++#if !defined(__ANDROID_API_P__)
++#define __ANDROID_API_P__ 28
++#endif
++
++#if !defined(__ANDROID_API_Q__)
++#define __ANDROID_API_Q__ 29
++#endif
++
++#if !defined(__ANDROID_API_R__)
++#define __ANDROID_API_R__ 30
++#endif
++
++#if !defined(__ANDROID_API_S__)
++#define __ANDROID_API_S__ 31
++#endif
++
++#if !defined(__ANDROID_API_T__)
++#define __ANDROID_API_T__ 33
++#endif
++
++#if !defined(__ANDROID_API_U__)
++#define __ANDROID_API_U__ 34
++#endif
++
++#if !defined(__ANDROID_API_V__)
++#define __ANDROID_API_V__ 35
++#endif
 +
 +/*
 +* Not the best solution, but works for simple cases where Android
