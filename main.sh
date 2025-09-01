@@ -13,7 +13,8 @@ declare -r binutils_directory='/tmp/binutils-with-gold-2.44'
 declare -ra targets=(
 	'aarch64-unknown-linux-android'
 	'riscv64-unknown-linux-android'
-	'arm-unknown-linux-androideabi'
+	'armv7-unknown-linux-androideabi'
+	'armv5-unknown-linux-androideabi'
 	'x86_64-unknown-linux-android'
 	'i686-unknown-linux-android'
 	'mipsel-unknown-linux-android'
@@ -64,6 +65,14 @@ function get_arch() {
 	fi
 	
 	if [ "${1}" = 'arm-unknown-linux-androideabi' ]; then
+		echo 'arm'
+	fi
+	
+	if [ "${1}" = 'armv5-unknown-linux-androideabi' ]; then
+		echo 'arm'
+	fi
+	
+	if [ "${1}" = 'armv7-unknown-linux-androideabi' ]; then
 		echo 'arm'
 	fi
 	
@@ -254,11 +263,15 @@ declare -r include_directory_new="${ndk_directory}/toolchains/llvm/prebuilt/linu
 
 for target in "${targets[@]}"; do
 	declare arch="$(get_arch ${target})"
+	
 	declare triplet="${target/-unknown/}"
+	declare triplet="${triplet/armv7/arm}"
+	declare triplet="${triplet/armv5/arm}"
+	
 	declare unsupported_ndk='0'
 	
 	for version in "${versions[@]}"; do
-		if [ -d "${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}" ]; then
+		if [ "${target}" != 'armv5-unknown-linux-androideabi' ] && [ -d "${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${triplet}/${version}" ]; then
 			unsupported_ndk='0'
 		elif [ -d "${unsupported_ndk_directory}/platforms/android-${version}/arch-${arch}" ]; then
 			unsupported_ndk='1'
