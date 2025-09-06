@@ -47,7 +47,7 @@ declare -r versions=(
 )
 
 declare -r ndk_archive='/tmp/ndk.zip'
-declare -r ndk_directory='/tmp/android-ndk-r29-beta3'
+declare -r ndk_directory='/tmp/android-ndk-r29-beta4'
 declare -r unsupported_ndk_directory='/tmp/android-ndk-r16b'
 
 declare -r include_dir="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
