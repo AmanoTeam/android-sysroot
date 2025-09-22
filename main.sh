@@ -95,15 +95,35 @@ function get_arch() {
 }
 
 function remove_symbols() {
-
-	# "/tmp/bin/${1}-objcopy" \
-	# --redefine-sym '__stack_chk_fail=liaf_khc_kcats__' \
-	# --redefine-sym '__stack_chk_fail_local=lacol_liaf_khc_kcats__' \
-	# "${2}"
 	
 	"/tmp/bin/${1}-objcopy" \
 		--strip-symbol '__stack_chk_fail_local' \
 		"${2}"
+	
+}
+
+function merge_libraries() {
+	
+	local cwd="${PWD}"
+	
+	cd "${1}"
+	
+	mkdir 'tmp'
+	cd 'tmp'
+	
+	ar x '../libpino-math.a'
+	ar rcs '../libm.a' *'.o'
+	
+	rm --force --recursive ./*
+	
+	if [ -f '../libpino-mman.a' ]; then
+		ar x '../libpino-mman.a'
+		ar rcs '../libc.a' *'.o'
+	fi
+	
+	rm --force --recursive "${PWD}"
+	
+	cd "${cwd}"
 	
 }
 
@@ -367,6 +387,32 @@ for target in "${targets[@]}"; do
 		rm --force --recursive "${sysroot_directory}/include/c++"
 		
 		declare tarball_filename="${sysroot_directory}.tar.xz"
+		
+		declare source="https://github.com/AmanoTeam/libpino/releases/latest/download/${target}.tar.xz"
+		declare destination='/tmp/libpino.tar.xz'
+		
+		echo "Fetching prebuilts from '${source}'"
+		
+		curl \
+			--url "${libpino_url}" \
+			--retry '30' \
+			--retry-delay '0' \
+			--retry-all-errors \
+			--retry-max-time '0' \
+			--location \
+			--silent \
+			--output "${destination}"
+		
+		tar \
+			--directory="${sysroot_directory}/lib" \
+			--extract \
+			--file="${destination}"
+		
+		if (( version >= 21 )); then
+			rm --force "${sysroot_directory}/lib/libpino-mman.a"
+		fi
+		
+		merge_libraries "${sysroot_directory}/lib"
 		
 		tar --directory='/tmp' --create --file=- "$(basename "${sysroot_directory}")" | xz --compress -9 > "${tarball_filename}"
 		sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
