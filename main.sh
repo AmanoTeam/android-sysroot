@@ -394,7 +394,7 @@ for target in "${targets[@]}"; do
 		echo "Fetching prebuilts from '${source}'"
 		
 		curl \
-			--url "${libpino_url}" \
+			--url "${source}" \
 			--retry '30' \
 			--retry-delay '0' \
 			--retry-all-errors \
