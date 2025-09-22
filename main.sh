@@ -385,6 +385,7 @@ for target in "${targets[@]}"; do
 		fi
 		
 		rm "${sysroot_directory}/lib/lib"{compiler,stdc++,c++}* || true
+		rm "${sysroot_directory}/lib/lib"*'.a'
 		rm --force --recursive "${sysroot_directory}/include/c++"
 		
 		declare tarball_filename="${sysroot_directory}.tar.xz"
