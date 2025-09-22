@@ -121,6 +121,7 @@ function merge_libraries() {
 		ar rcs '../libc.a' *'.o'
 	fi
 	
+	rm --force '../libpino-'*
 	rm --force --recursive "${PWD}"
 	
 	cd "${cwd}"
