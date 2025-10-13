@@ -7,9 +7,6 @@ declare -r debian_sysroot_tarball='/tmp/sysroot.tar.xz'
 declare -r mipsel_sysroot='/tmp/mipsel-unknown-linux-gnu2.31'
 declare -r mips64_sysroot='/tmp/mips64el-unknown-linux-gnuabi642.31'
 
-declare -r binutils_tarball='/tmp/binutils.tar.xz'
-declare -r binutils_directory='/tmp/binutils-with-gold-2.44'
-
 declare -ra targets=(
 	'aarch64-unknown-linux-android'
 	'riscv64-unknown-linux-android'
@@ -96,7 +93,7 @@ function get_arch() {
 
 function remove_symbols() {
 	
-	"/tmp/bin/${1}-objcopy" \
+	"${1}-objcopy" \
 		--strip-symbol '__stack_chk_fail_local' \
 		"${2}"
 	
@@ -206,23 +203,6 @@ if ! [ -f "${ndk_archive}" ]; then
 		"${unsupported_ndk_directory}/platforms/android-20"
 fi
 
-if ! [ -f "${binutils_tarball}" ]; then
-	curl \
-		--url 'https://mirrors.kernel.org/gnu/binutils/binutils-with-gold-2.44.tar.xz' \
-		--retry '30' \
-		--retry-delay '0' \
-		--retry-all-errors \
-		--retry-max-time '0' \
-		--location \
-		--silent \
-		--output "${binutils_tarball}"
-	
-	tar \
-		--directory="$(dirname "${binutils_directory}")" \
-		--extract \
-		--file="${binutils_tarball}"
-fi
-
 if ! [ -f "${debian_sysroot_tarball}" ]; then
 	curl \
 		--url 'https://github.com/AmanoTeam/debian-sysroot/releases/latest/download/mipsel-unknown-linux-gnu2.31.tar.xz' \
@@ -260,25 +240,6 @@ if ! [ -f "${debian_sysroot_tarball}" ]; then
 		"${mips64_sysroot}/include/asm/signal.h" \
 		"${mipsel_sysroot}/include/asm/signal.h"
 fi
-
-for target in "${targets[@]}"; do
-	[ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
-	
-	cd "${binutils_directory}/build"
-	rm --force --recursive ./*
-	
-	../configure \
-		--target="${target}" \
-		--prefix='/tmp' \
-		--disable-gold \
-		--disable-ld \
-		CFLAGS='-Oz' \
-		CXXFLAGS='-Oz' \
-		LDFLAGS='-Xlinker -s'
-	
-	make all --jobs
-	make install
-done
 
 declare -r include_directory_old="${unsupported_ndk_directory}/sysroot/usr/include"
 declare -r include_directory_new="${ndk_directory}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"

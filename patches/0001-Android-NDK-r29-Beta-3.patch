@@ -1,4 +1,4 @@
-From c595dc0d132087499fb57705e408e45b69234095 Mon Sep 17 00:00:00 2001
+From 75b1d1e6c56088293f32eeaa019c5279b5bf21d9 Mon Sep 17 00:00:00 2001
 From: Kartatz <105828205+Kartatz@users.noreply.github.com>
 Date: Thu, 21 Aug 2025 22:12:32 -0300
 Subject: [PATCH] Android NDK r29 Beta 3
@@ -41,6 +41,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  fts.h                               |  12 +-
  ftw.h                               |  15 +-
  inttypes.h                          |  16 +-
+ langinfo.h                          |   3 +
  link.h                              |   4 +-
  locale.h                            |  16 +-
  malloc.h                            |   8 +-
@@ -86,7 +87,7 @@ Subject: [PATCH] Android NDK r29 Beta 3
  unistd.h                            |  63 ++++--
  wchar.h                             |  63 ++++--
  wctype.h                            |  38 ++--
- 82 files changed, 2282 insertions(+), 916 deletions(-)
+ 83 files changed, 2285 insertions(+), 916 deletions(-)
  create mode 100644 android/legacy_fenv_inlines_arm.h
  create mode 100644 android/legacy_fenv_inlines_mips.h
  create mode 100644 android/legacy_signal_inlines.h
@@ -2844,6 +2845,20 @@ index 790030e..a3afebb 100644
  __END_DECLS
  
  #endif
+diff --git a/langinfo.h b/langinfo.h
+index b9d695c..9dc0f30 100644
+--- a/langinfo.h
++++ b/langinfo.h
+@@ -96,6 +96,9 @@ __BEGIN_DECLS
+ #if __BIONIC_AVAILABILITY_GUARD(26)
+ char* _Nonnull nl_langinfo(nl_item __item) __INTRODUCED_IN(26);
+ char* _Nonnull nl_langinfo_l(nl_item __item, locale_t _Nonnull __l) __INTRODUCED_IN(26);
++#else
++__static_inline__ char* _Nonnull nl_langinfo(nl_item __item) { return "ASCII"; }
++__static_inline__ char* _Nonnull nl_langinfo_l(nl_item __item, locale_t _Nonnull __l) { return "ASCII"; }
+ #endif /* __BIONIC_AVAILABILITY_GUARD(26) */
+ 
+ 
 diff --git a/link.h b/link.h
 index 331070e..aa82cde 100644
 --- a/link.h
